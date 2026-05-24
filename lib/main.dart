@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
@@ -186,7 +187,7 @@ class BlockExecutor {
 
     while (currentBlockId != null && isRunning) {
       final blockData = target.blocks[currentBlockId];
-      if (blockData is! Map) {
+      if (blockData is! Map<String, dynamic>) {
         currentBlockId = null;
         continue;
       }
@@ -243,9 +244,9 @@ class BlockExecutor {
       steps = _castToNumber(value);
     }
 
-    final radians = (90 - target.direction) * 3.1415926535 / 180;
-    final dx = steps * radians.cos;
-    final dy = steps * radians.sin;
+    final radians = (90 - target.direction) * math.pi / 180;
+    final dx = steps * math.cos(radians);
+    final dy = steps * math.sin(radians);
 
     target.setXY(target.x + dx, target.y + dy);
     await Future.delayed(const Duration(milliseconds: 100));
@@ -910,10 +911,10 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Transform(
                 transform: Matrix4.identity()
                   ..rotateZ(sprite.rotationStyle == 'all around'
-                      ? (sprite.direction - 90) * 3.1415926535 / 180
+                      ? (sprite.direction - 90) * math.pi / 180
                       : 0)
-                  ..scale(effectiveScale)
-                  ..translate(
+                  ..scaleByDouble(effectiveScale)
+                  ..translateByDouble(
                     -costume.rotationCenterX.toDouble(),
                     -costume.rotationCenterY.toDouble(),
                   ),
@@ -956,7 +957,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     if (rotationStyle == 'all around') {
-      final rotation = (direction - 90) * 3.1415926535 / 180;
+      final rotation = (direction - 90) * math.pi / 180;
       return Transform.rotate(
         angle: rotation,
         child: imageWidget,
