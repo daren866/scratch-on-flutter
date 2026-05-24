@@ -913,10 +913,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ..rotateZ(sprite.rotationStyle == 'all around'
                       ? (sprite.direction - 90) * math.pi / 180
                       : 0)
-                  ..scaleByDouble(effectiveScale)
-                  ..translateByDouble(
-                    -costume.rotationCenterX.toDouble(),
-                    -costume.rotationCenterY.toDouble(),
+                  ..scale(effectiveScale, effectiveScale)
+                  ..translate(
+                    <double>[
+                      -costume.rotationCenterX.toDouble(),
+                      -costume.rotationCenterY.toDouble(),
+                      0,
+                    ],
                   ),
                 alignment: Alignment.topLeft,
                 child: image,
