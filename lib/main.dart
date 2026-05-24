@@ -895,43 +895,28 @@ class _MyHomePageState extends State<MyHomePage> {
             final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
             final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
 
-            final image = sprite.rotationStyle == 'left-right' &&
-                    (sprite.direction < 0 || sprite.direction > 180)
-                ? Transform.flip(
-                    flipX: true,
-                    child: _buildCostumeWidget(costume, fit: BoxFit.contain),
-                  )
-                : _buildCostumeWidget(costume, fit: BoxFit.contain);
+            final scaledSize = sprite.size / 100 / costume.bitmapResolution;
+            final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
+            final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
 
-            final effectiveScale = sprite.size / 100 / costume.bitmapResolution;
+            Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
 
-            Matrix4 transform = Matrix4.identity();
-            
-            if (sprite.rotationStyle == 'all around') {
-              transform = Matrix4.identity()
-                ..setEntry(0, 0, math.cos((sprite.direction - 90) * math.pi / 180))
-                ..setEntry(0, 1, -math.sin((sprite.direction - 90) * math.pi / 180))
-                ..setEntry(1, 0, math.sin((sprite.direction - 90) * math.pi / 180))
-                ..setEntry(1, 1, math.cos((sprite.direction - 90) * math.pi / 180));
-            }
-            
-            transform = transform
-              ..scale(effectiveScale, effectiveScale)
-              ..translate(
-                <double>[
-                  -costume.rotationCenterX.toDouble(),
-                  -costume.rotationCenterY.toDouble(),
-                  0,
-                ],
+            if (sprite.rotationStyle == 'left-right' &&
+                (sprite.direction < 0 || sprite.direction > 180)) {
+              child = Transform.flip(flipX: true, child: child);
+            } else if (sprite.rotationStyle == 'all around') {
+              child = Transform.rotate(
+                angle: (sprite.direction - 90) * math.pi / 180,
+                child: child,
               );
+            }
 
             return Positioned(
-              left: screenX,
-              top: screenY,
-              child: Transform(
-                transform: transform,
-                alignment: Alignment.topLeft,
-                child: image,
+              left: screenX - scaledRotationCenterX,
+              top: screenY - scaledRotationCenterY,
+              child: Transform.scale(
+                scale: scaledSize,
+                child: child,
               ),
             );
           }),
