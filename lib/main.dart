@@ -280,7 +280,7 @@ class _MyHomePageState extends State<MyHomePage> {
       x: (targetJson['x'] ?? 0).toDouble(),
       y: (targetJson['y'] ?? 0).toDouble(),
       direction: (targetJson['direction'] ?? 90).toDouble(),
-      size: (targetJson['size'] ?? 100).toDouble(),
+      size: ((targetJson['size'] ?? 100) as num).roundToDouble(),
       currentCostume: ((targetJson['currentCostume'] ?? 0) as num).toInt(),
       variables: Map<String, dynamic>.from(targetJson['variables'] ?? {}),
       lists: Map<String, dynamic>.from(targetJson['lists'] ?? {}),
