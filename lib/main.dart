@@ -604,6 +604,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   )
                 : _buildCostumeWidget(costume, fit: BoxFit.contain);
 
+            final effectiveScale = sprite.size / 100 / costume.bitmapResolution;
+
             return Positioned(
               left: screenX,
               top: screenY,
@@ -612,7 +614,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ..rotateZ(sprite.rotationStyle == 'all around'
                       ? (sprite.direction - 90) * 3.1415926535 / 180
                       : 0)
-                  ..scale(sprite.size / 100)
+                  ..scale(effectiveScale)
                   ..translate(
                     -costume.rotationCenterX.toDouble(),
                     -costume.rotationCenterY.toDouble(),
