@@ -1,5 +1,7 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'dart:convert';
@@ -85,6 +87,9 @@ class ScratchTarget {
   final Map<String, dynamic> blocks;
   final List<ScratchCostume> costumes;
   final List<ScratchSound> sounds;
+  final int layerOrder;
+  final double volume;
+  final String rotationStyle;
 
   ScratchTarget({
     required this.name,
@@ -101,6 +106,9 @@ class ScratchTarget {
     Map<String, dynamic>? blocks,
     List<ScratchCostume>? costumes,
     List<ScratchSound>? sounds,
+    this.layerOrder = 0,
+    this.volume = 100,
+    this.rotationStyle = 'all around',
   })  : variables = variables ?? {},
         lists = lists ?? {},
         broadcasts = broadcasts ?? {},
@@ -137,61 +145,49 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String? _selectedFilePath;
+  Uint8List? _selectedFileBytes;
   ProjectBank? _projectBank;
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
 
-  Future<void> _pickAndLoadFile() async {
+  Future<void> _pickFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['sb3'],
-      );
-
-      if (result != null && result.files.single.path != null) {
-        final filePath = result.files.single.path!;
-        setState(() {
-          _selectedFilePath = filePath;
-          _isLoading = true;
-          _statusMessage = '正在加载文件...';
-        });
-
-        await _loadProject(filePath);
-      }
-    } catch (e) {
-      setState(() {
-        _statusMessage = '选择文件失败: $e';
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _loadProject(String filePath) async {
-    try {
-      final file = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['sb3'],
         withData: true,
       );
 
-      if (file == null || file.files.isEmpty) {
+      if (result != null && result.files.single.path != null) {
         setState(() {
-          _statusMessage = '文件读取失败';
-          _isLoading = false;
+          _selectedFilePath = result.files.single.path;
+          _selectedFileBytes = result.files.single.bytes;
+          _projectBank = null;
+          _statusMessage = '文件已选择，请点击加载';
         });
-        return;
       }
+    } catch (e) {
+      setState(() {
+        _statusMessage = '选择文件失败: $e';
+      });
+    }
+  }
 
-      final bytes = file.files.single.bytes;
-      if (bytes == null) {
-        setState(() {
-          _statusMessage = '文件数据为空';
-          _isLoading = false;
-        });
-        return;
-      }
+  Future<void> _loadProject() async {
+    if (_selectedFileBytes == null) {
+      setState(() {
+        _statusMessage = '请先选择文件';
+      });
+      return;
+    }
 
-      final bank = await _parseSB3(bytes);
+    setState(() {
+      _isLoading = true;
+      _statusMessage = '正在加载文件...';
+    });
+
+    try {
+      final bank = await _parseSB3(_selectedFileBytes!);
 
       setState(() {
         _projectBank = bank;
@@ -200,18 +196,19 @@ class _MyHomePageState extends State<MyHomePage> {
             '项目版本: ${bank.projectVersion}\n'
             '目标数量: ${bank.targets.length}\n'
             '造型数量: ${bank.allCostumes.length}\n'
-            '声音数量: ${bank.allSounds.length}';
+            '声音数量: ${bank.allSounds.length}\n'
+            '点击渲染查看舞台';
       });
 
       debugPrint('项目加载成功！');
       debugPrint('目标数量: ${bank.targets.length}');
-      debugPrint('造型数量: ${bank.allCostumes.length}');
-      debugPrint('声音数量: ${bank.allSounds.length}');
-
+      for (var target in bank.targets) {
+        debugPrint('  - ${target.name} (${target.isStage ? "舞台" : "角色"}), 造型: ${target.costumes.length}');
+      }
     } catch (e) {
       setState(() {
-        _statusMessage = '加载失败: $e';
         _isLoading = false;
+        _statusMessage = '加载失败: $e';
       });
       debugPrint('加载失败: $e');
     }
@@ -292,6 +289,9 @@ class _MyHomePageState extends State<MyHomePage> {
       blocks: Map<String, dynamic>.from(targetJson['blocks'] ?? {}),
       costumes: costumes,
       sounds: sounds,
+      layerOrder: targetJson['layerOrder'] ?? 0,
+      volume: (targetJson['volume'] ?? 100).toDouble(),
+      rotationStyle: targetJson['rotationStyle'] ?? 'all around',
     );
   }
 
@@ -341,6 +341,21 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _render() {
+    if (_projectBank == null) {
+      setState(() {
+        _statusMessage = '请先加载项目';
+      });
+      return;
+    }
+
+    setState(() {
+      _statusMessage = '渲染完成！\n'
+          '舞台: ${_projectBank!.targets.where((t) => t.isStage).length}\n'
+          '角色: ${_projectBank!.targets.where((t) => !t.isStage).length}';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -388,7 +403,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                           child: _projectBank != null
-                              ? Center(
+                              ? _buildStageWidget()
+                              : Center(
                                   child: Text(
                                     _statusMessage,
                                     textAlign: TextAlign.center,
@@ -397,8 +413,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       color: Colors.black54,
                                     ),
                                   ),
-                                )
-                              : null,
+                                ),
                         ),
                       ],
                     ),
@@ -442,17 +457,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: _isLoading ? null : _pickAndLoadFile,
-                            icon: _isLoading
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.folder_open, size: 18),
-                            label: Text(_isLoading ? '加载中...' : '选择文件'),
+                            onPressed: _isLoading ? null : _pickFile,
+                            icon: const Icon(Icons.folder_open, size: 18),
+                            label: const Text('选择文件'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey[300],
                               foregroundColor: Colors.black87,
@@ -472,7 +479,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () {},
+                                onPressed: _render,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.grey[300],
                                   foregroundColor: Colors.black87,
@@ -496,16 +503,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _projectBank != null
-                                    ? () {
-                                        setState(() {
-                                          _statusMessage =
-                                              '已加载项目:\n${_projectBank!.targets.length} 个目标\n'
-                                              '${_projectBank!.allCostumes.length} 个造型\n'
-                                              '${_projectBank!.allSounds.length} 个声音';
-                                        });
-                                      }
-                                    : null,
+                                onPressed: _isLoading ? null : _loadProject,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.grey[300],
                                   foregroundColor: Colors.black87,
@@ -518,12 +516,20 @@ class _MyHomePageState extends State<MyHomePage> {
                                     vertical: 10,
                                   ),
                                 ),
-                                child: const Text(
-                                  '加载',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        '加载',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
@@ -538,5 +544,99 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildStageWidget() {
+    final targets = _projectBank!.targets;
+    
+    final stage = targets.firstWhere(
+      (t) => t.isStage,
+      orElse: () => targets.first,
+    );
+
+    final sprites = targets.where((t) => !t.isStage).toList()
+      ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
+
+    return Stack(
+      children: [
+        if (stage.costumes.isNotEmpty)
+          Positioned.fill(
+            child: _buildCostumeWidget(
+              stage.costumes[stage.currentCostume],
+              fit: BoxFit.cover,
+            ),
+          ),
+        ...sprites.map((sprite) {
+          if (!sprite.isVisible || sprite.costumes.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          final costume = sprite.costumes[sprite.currentCostume];
+          final screenX = (sprite.x + 240) * (480 / 480);
+          final screenY = (180 - sprite.y) * (320 / 360);
+
+          return Positioned(
+            left: screenX - (costume.rotationCenterX * sprite.size / 100),
+            top: screenY - (costume.rotationCenterY * sprite.size / 100),
+            child: Transform.scale(
+              scale: sprite.size / 100,
+              child: _buildCostumeWidget(
+                costume,
+                direction: sprite.direction,
+                rotationStyle: sprite.rotationStyle,
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCostumeWidget(
+    ScratchCostume costume, {
+    BoxFit fit = BoxFit.contain,
+    double direction = 90,
+    String rotationStyle = 'all around',
+  }) {
+    if (costume.data.isEmpty) {
+      return Container(
+        width: 50,
+        height: 50,
+        color: Colors.grey[300],
+        child: const Icon(Icons.broken_image, size: 24),
+      );
+    }
+
+    Widget imageWidget;
+    if (costume.dataFormat == 'svg') {
+      imageWidget = Image.memory(
+        costume.data,
+        fit: fit,
+        width: costume.bitmapResolution == 1 ? null : 100.0,
+        height: costume.bitmapResolution == 1 ? null : 100.0,
+      );
+    } else {
+      imageWidget = Image.memory(
+        costume.data,
+        fit: fit,
+      );
+    }
+
+    if (rotationStyle == 'all around') {
+      final rotation = (direction - 90) * 3.14159 / 180;
+      return Transform.rotate(
+        angle: rotation,
+        child: imageWidget,
+      );
+    } else if (rotationStyle == 'left-right') {
+      if (direction < 0 || direction > 180) {
+        return Transform.flip(
+          flipX: true,
+          child: imageWidget,
+        );
+      }
+    }
+
+    return imageWidget;
   }
 }
