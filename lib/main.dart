@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'dart:convert';
@@ -604,10 +605,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   angle: sprite.rotationStyle == 'all around' 
                       ? (sprite.direction - 90) * 3.1415926535 / 180 
                       : 0,
-                  child: Image.memory(
-                    costume.data,
-                    fit: BoxFit.contain,
-                  ),
+                  child: _buildCostumeWidget(costume, fit: BoxFit.contain),
                 ),
               ),
             );
@@ -632,10 +630,18 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
 
-    Widget imageWidget = Image.memory(
-      costume.data,
-      fit: fit,
-    );
+    Widget imageWidget;
+    if (costume.dataFormat == 'svg') {
+      imageWidget = SvgPicture.memory(
+        costume.data,
+        fit: fit,
+      );
+    } else {
+      imageWidget = Image.memory(
+        costume.data,
+        fit: fit,
+      );
+    }
 
     if (rotationStyle == 'all around') {
       final rotation = (direction - 90) * 3.1415926535 / 180;
