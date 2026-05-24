@@ -1,17 +1,8 @@
-# my_app
-
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Scratch3 on flutter
+该项目基于flutter框架，实现对scratch-vm的兼容。
+## 功能
+目前仅支持渲染舞台，未来将引入积木执行功能
+### 有什么用
+实现对scratch-vm项目的解析，让sb3作品在flutter上嵌入/运行
+#### 基于vibe coding
+不用写代码，-1岁小孩子就能跑起来。。。
