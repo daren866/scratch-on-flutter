@@ -1,9 +1,163 @@
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'dart:convert';
+
+class StageRenderer extends CustomPainter {
+  final ProjectBank projectBank;
+
+  StageRenderer(this.projectBank);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final targets = projectBank.targets;
+    if (targets.isEmpty) return;
+
+    final stage = targets.firstWhere(
+      (t) => t.isStage,
+      orElse: () => targets.first,
+    );
+
+    final sprites = targets.where((t) => !t.isStage).toList()
+      ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
+
+    final scratchStageWidth = 480.0;
+    final scratchStageHeight = 360.0;
+    final renderWidth = size.width;
+    final renderHeight = size.height;
+
+    final scaleX = renderWidth / scratchStageWidth;
+    final scaleY = renderHeight / scratchStageHeight;
+
+    canvas.save();
+    canvas.scale(scaleX, scaleY);
+
+    if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty) {
+      final costume = stage.costumes[stage.currentCostume];
+      _drawCostume(canvas, costume, scratchStageWidth / 2, scratchStageHeight / 2, 100, 0, 'all around', scratchStageWidth, scratchStageHeight);
+    }
+
+    for (final sprite in sprites) {
+      if (!sprite.isVisible || sprite.costumes.isEmpty) continue;
+      final costume = sprite.costumes[sprite.currentCostume];
+      if (costume.data.isEmpty) continue;
+
+      _drawCostume(
+        canvas,
+        costume,
+        sprite.x + scratchStageWidth / 2,
+        scratchStageHeight / 2 - sprite.y,
+        sprite.size,
+        sprite.direction,
+        sprite.rotationStyle,
+        scratchStageWidth,
+        scratchStageHeight,
+      );
+    }
+
+    canvas.restore();
+  }
+
+  void _drawCostume(
+    Canvas canvas,
+    ScratchCostume costume,
+    double x,
+    double y,
+    double size,
+    double direction,
+    String rotationStyle,
+    double stageWidth,
+    double stageHeight,
+  ) {
+    final scale = size / 100;
+    double rotation = 0;
+
+    if (rotationStyle == 'all around') {
+      rotation = (direction - 90) * 3.1415926535 / 180;
+    }
+
+    canvas.save();
+    canvas.translate(x, y);
+
+    if (rotationStyle == 'left-right') {
+      if (direction < 0 || direction > 180) {
+        canvas.scale(-1, 1);
+      }
+    } else if (rotationStyle == 'all around') {
+      canvas.rotate(rotation);
+    }
+
+    canvas.scale(scale);
+    canvas.translate(-costume.rotationCenterX, -costume.rotationCenterY);
+
+    if (costume.dataFormat == 'svg') {
+      _drawSvg(canvas, costume.data, stageWidth, stageHeight);
+    } else {
+      _drawPng(canvas, costume.data);
+    }
+
+    canvas.restore();
+  }
+
+  void _drawSvg(Canvas canvas, Uint8List data, double width, double height) {
+    try {
+      final svgString = String.fromCharCodes(data);
+      final picture = svgStringToPicture(svgString, width, height);
+      if (picture != null) {
+        canvas.drawPicture(picture);
+      }
+    } catch (e) {
+      debugPrint('SVG rendering error: $e');
+    }
+  }
+
+  ui.Picture? svgStringToPicture(String svgString, double width, double height) {
+    try {
+      final builder = ui.PictureRecorder();
+      final canvas = Canvas(builder);
+      final svgDrawable = SvgDrawable(svgString);
+      svgDrawable.draw(canvas, Size(width, height));
+      return builder.endRecording();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  void _drawPng(Canvas canvas, Uint8List data) {
+    try {
+      ui.decodeImageFromList(data, (image) {
+        canvas.drawImage(image, Offset.zero, Paint());
+      });
+    } catch (e) {
+      debugPrint('PNG rendering error: $e');
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant StageRenderer oldDelegate) {
+    return oldDelegate.projectBank != projectBank;
+  }
+}
+
+class SvgDrawable {
+  final String svgString;
+  SvgDrawable(this.svgString);
+
+  void draw(Canvas canvas, Size size) {
+    try {
+      final svgPicture = SvgPicture.string(
+        svgString,
+        width: size.width,
+        height: size.height,
+      );
+    } catch (e) {
+      debugPrint('SVG draw error: $e');
+    }
+  }
+}
 
 void main() {
   runApp(const MyApp());
@@ -546,121 +700,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildStageWidget() {
-    final targets = _projectBank!.targets;
-    
-    final stage = targets.firstWhere(
-      (t) => t.isStage,
-      orElse: () => targets.first,
-    );
-
-    final sprites = targets.where((t) => !t.isStage).toList()
-      ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
-
     return Container(
       width: 480,
       height: 320,
-      color: Colors.white,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
-            _buildCostumeWidget(
-              stage.costumes[stage.currentCostume],
-              fit: BoxFit.cover,
-            )
-          else
-            Container(
-              color: Colors.lightBlue[100],
-              child: const Center(
-                child: Text('舞台背景'),
-              ),
-            ),
-          ...sprites.map((sprite) {
-            if (!sprite.isVisible || sprite.costumes.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            final costume = sprite.costumes[sprite.currentCostume];
-            if (costume.data.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            final scratchStageWidth = 480.0;
-            final scratchStageHeight = 360.0;
-            final renderWidth = 480.0;
-            final renderHeight = 320.0;
-
-            final scaleX = renderWidth / scratchStageWidth;
-            final scaleY = renderHeight / scratchStageHeight;
-
-            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
-            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
-
-            final scaledRotationCenterX = costume.rotationCenterX * sprite.size / 100 * scaleX;
-            final scaledRotationCenterY = costume.rotationCenterY * sprite.size / 100 * scaleY;
-
-            return Positioned(
-              left: screenX - scaledRotationCenterX,
-              top: screenY - scaledRotationCenterY,
-              child: Transform.scale(
-                scale: sprite.size / 100,
-                child: Transform.rotate(
-                  angle: sprite.rotationStyle == 'all around' 
-                      ? (sprite.direction - 90) * 3.1415926535 / 180 
-                      : 0,
-                  child: _buildCostumeWidget(costume, fit: BoxFit.contain),
-                ),
-              ),
-            );
-          }),
-        ],
+      color: Colors.lightBlue[100],
+      child: CustomPaint(
+        painter: StageRenderer(_projectBank!),
+        size: const Size(480, 320),
       ),
     );
-  }
-
-  Widget _buildCostumeWidget(
-    ScratchCostume costume, {
-    BoxFit fit = BoxFit.contain,
-    double direction = 90,
-    String rotationStyle = 'all around',
-  }) {
-    if (costume.data.isEmpty) {
-      return Container(
-        width: 50,
-        height: 50,
-        color: Colors.grey[300],
-        child: const Icon(Icons.broken_image, size: 24),
-      );
-    }
-
-    Widget imageWidget;
-    if (costume.dataFormat == 'svg') {
-      imageWidget = SvgPicture.memory(
-        costume.data,
-        fit: fit,
-      );
-    } else {
-      imageWidget = Image.memory(
-        costume.data,
-        fit: fit,
-      );
-    }
-
-    if (rotationStyle == 'all around') {
-      final rotation = (direction - 90) * 3.1415926535 / 180;
-      return Transform.rotate(
-        angle: rotation,
-        child: imageWidget,
-      );
-    } else if (rotationStyle == 'left-right') {
-      if (direction < 0 || direction > 180) {
-        return Transform.flip(
-          flipX: true,
-          child: imageWidget,
-        );
-      }
-    }
-
-    return imageWidget;
   }
 }
