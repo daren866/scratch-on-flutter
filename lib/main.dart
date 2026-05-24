@@ -596,9 +596,12 @@ class _MyHomePageState extends State<MyHomePage> {
             final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
             final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
 
+            final scaledRotationCenterX = costume.rotationCenterX * sprite.size / 100;
+            final scaledRotationCenterY = costume.rotationCenterY * sprite.size / 100;
+
             return Positioned(
-              left: screenX - (costume.rotationCenterX * scaleX * sprite.size / 100),
-              top: screenY - (costume.rotationCenterY * scaleY * sprite.size / 100),
+              left: screenX - scaledRotationCenterX,
+              top: screenY - scaledRotationCenterY,
               child: Transform.scale(
                 scale: sprite.size / 100,
                 child: Transform.rotate(
