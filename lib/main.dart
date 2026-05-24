@@ -596,20 +596,29 @@ class _MyHomePageState extends State<MyHomePage> {
             final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
             final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
 
-            final scaledRotationCenterX = costume.rotationCenterX * sprite.size / 100;
-            final scaledRotationCenterY = costume.rotationCenterY * sprite.size / 100;
+            final image = sprite.rotationStyle == 'left-right' &&
+                    (sprite.direction < 0 || sprite.direction > 180)
+                ? Transform.flip(
+                    flipX: true,
+                    child: _buildCostumeWidget(costume, fit: BoxFit.contain),
+                  )
+                : _buildCostumeWidget(costume, fit: BoxFit.contain);
 
             return Positioned(
-              left: screenX - scaledRotationCenterX,
-              top: screenY - scaledRotationCenterY,
-              child: Transform.scale(
-                scale: sprite.size / 100,
-                child: Transform.rotate(
-                  angle: sprite.rotationStyle == 'all around'
+              left: screenX,
+              top: screenY,
+              child: Transform(
+                transform: Matrix4.identity()
+                  ..rotateZ(sprite.rotationStyle == 'all around'
                       ? (sprite.direction - 90) * 3.1415926535 / 180
-                      : 0,
-                  child: _buildCostumeWidget(costume, fit: BoxFit.contain),
-                ),
+                      : 0)
+                  ..scale(sprite.size / 100)
+                  ..translate(
+                    -costume.rotationCenterX.toDouble(),
+                    -costume.rotationCenterY.toDouble(),
+                  ),
+                alignment: Alignment.topLeft,
+                child: image,
               ),
             );
           }),
