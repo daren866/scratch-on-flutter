@@ -74,11 +74,11 @@ class ScratchSound extends ScratchAsset {
 class ScratchTarget {
   final String name;
   final bool isStage;
-  final bool isVisible;
-  final double x;
-  final double y;
-  final double direction;
-  final double size;
+  bool isVisible;
+  double x;
+  double y;
+  double direction;
+  double size;
   final int currentCostume;
   final Map<String, dynamic> variables;
   final Map<String, dynamic> lists;
@@ -114,6 +114,23 @@ class ScratchTarget {
         blocks = blocks ?? {},
         costumes = costumes ?? [],
         sounds = sounds ?? [];
+
+  void setXY(double newX, double newY) {
+    x = newX;
+    y = newY;
+  }
+
+  void setDirection(double newDirection) {
+    direction = newDirection;
+  }
+
+  void setX(double newX) {
+    x = newX;
+  }
+
+  void setY(double newY) {
+    y = newY;
+  }
 }
 
 class ProjectBank {
@@ -133,6 +150,230 @@ class ProjectBank {
 
   String get projectVersion => projectJson['projectVersion']?.toString() ?? '3.0';
   String? get projectId => projectJson['projectId'];
+}
+
+class BlockExecutor {
+  final ProjectBank projectBank;
+  bool isRunning = false;
+
+  BlockExecutor(this.projectBank);
+
+  Future<void> run() async {
+    isRunning = true;
+    final greenFlagBlocks = <MapEntry<String, dynamic>>[];
+
+    for (final target in projectBank.targets) {
+      for (final entry in target.blocks.entries) {
+        final block = entry.value;
+        if (block is Map && block['opcode'] == 'event_whenflagclicked') {
+          greenFlagBlocks.add(entry);
+        }
+      }
+    }
+
+    for (final entry in greenFlagBlocks) {
+      final target = projectBank.targets.firstWhere(
+        (t) => t.blocks.containsKey(entry.key),
+      );
+      await _executeBlockChain(target, entry.key);
+    }
+
+    isRunning = false;
+  }
+
+  Future<void> _executeBlockChain(ScratchTarget target, String blockId) async {
+    String? currentBlockId = blockId;
+
+    while (currentBlockId != null && isRunning) {
+      final blockData = target.blocks[currentBlockId];
+      if (blockData is! Map) {
+        currentBlockId = null;
+        continue;
+      }
+
+      await _executeBlock(target, blockData);
+
+      currentBlockId = blockData['next'] as String?;
+    }
+  }
+
+  Future<void> _executeBlock(ScratchTarget target, Map<String, dynamic> block) async {
+    final opcode = block['opcode'] as String?;
+
+    if (opcode == null) return;
+
+    switch (opcode) {
+      case 'motion_movesteps':
+        await _executeMotionMoveSteps(target, block);
+        break;
+      case 'motion_gotoxy':
+        await _executeMotionGoToXY(target, block);
+        break;
+      case 'motion_turnright':
+        await _executeMotionTurnRight(target, block);
+        break;
+      case 'motion_turnleft':
+        await _executeMotionTurnLeft(target, block);
+        break;
+      case 'motion_pointindirection':
+        await _executeMotionPointInDirection(target, block);
+        break;
+      case 'motion_changexby':
+        await _executeMotionChangeXBy(target, block);
+        break;
+      case 'motion_setx':
+        await _executeMotionSetX(target, block);
+        break;
+      case 'motion_changeyby':
+        await _executeMotionChangeYBy(target, block);
+        break;
+      case 'motion_sety':
+        await _executeMotionSetY(target, block);
+        break;
+    }
+  }
+
+  Future<void> _executeMotionMoveSteps(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final stepsData = inputs['STEPS'] as List?;
+    
+    double steps = 0;
+    if (stepsData != null && stepsData.length >= 2) {
+      final value = stepsData[1];
+      steps = _castToNumber(value);
+    }
+
+    final radians = (90 - target.direction) * 3.1415926535 / 180;
+    final dx = steps * radians.cos;
+    final dy = steps * radians.sin;
+
+    target.setXY(target.x + dx, target.y + dy);
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeMotionGoToXY(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final xData = inputs['X'] as List?;
+    final yData = inputs['Y'] as List?;
+
+    double x = 0;
+    double y = 0;
+
+    if (xData != null && xData.length >= 2) {
+      x = _castToNumber(xData[1]);
+    }
+    if (yData != null && yData.length >= 2) {
+      y = _castToNumber(yData[1]);
+    }
+
+    target.setXY(x, y);
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeMotionTurnRight(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final degreesData = inputs['DEGREES'] as List?;
+
+    double degrees = 0;
+    if (degreesData != null && degreesData.length >= 2) {
+      degrees = _castToNumber(degreesData[1]);
+    }
+
+    target.setDirection(target.direction + degrees);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeMotionTurnLeft(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final degreesData = inputs['DEGREES'] as List?;
+
+    double degrees = 0;
+    if (degreesData != null && degreesData.length >= 2) {
+      degrees = _castToNumber(degreesData[1]);
+    }
+
+    target.setDirection(target.direction - degrees);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeMotionPointInDirection(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final directionData = inputs['DIRECTION'] as List?;
+
+    double direction = 90;
+    if (directionData != null && directionData.length >= 2) {
+      direction = _castToNumber(directionData[1]);
+    }
+
+    target.setDirection(direction);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeMotionChangeXBy(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final dxData = inputs['DX'] as List?;
+
+    double dx = 0;
+    if (dxData != null && dxData.length >= 2) {
+      dx = _castToNumber(dxData[1]);
+    }
+
+    target.setX(target.x + dx);
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeMotionSetX(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final xData = inputs['X'] as List?;
+
+    double x = 0;
+    if (xData != null && xData.length >= 2) {
+      x = _castToNumber(xData[1]);
+    }
+
+    target.setX(x);
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeMotionChangeYBy(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final dyData = inputs['DY'] as List?;
+
+    double dy = 0;
+    if (dyData != null && dyData.length >= 2) {
+      dy = _castToNumber(dyData[1]);
+    }
+
+    target.setY(target.y + dy);
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeMotionSetY(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final yData = inputs['Y'] as List?;
+
+    double y = 0;
+    if (yData != null && yData.length >= 2) {
+      y = _castToNumber(yData[1]);
+    }
+
+    target.setY(y);
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  double _castToNumber(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is List && value.isNotEmpty) {
+      return _castToNumber(value[1]);
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      return parsed ?? 0;
+    }
+    return 0;
+  }
 }
 
 class MyHomePage extends StatefulWidget {
@@ -355,6 +596,30 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  bool _isRunning = false;
+
+  Future<void> _runProject() async {
+    if (_projectBank == null) {
+      setState(() {
+        _statusMessage = '请先加载项目';
+      });
+      return;
+    }
+
+    setState(() {
+      _isRunning = true;
+      _statusMessage = '运行中...';
+    });
+
+    final executor = BlockExecutor(_projectBank!);
+    await executor.run();
+
+    setState(() {
+      _isRunning = false;
+      _statusMessage = '运行完成！';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -499,7 +764,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _loadProject,
@@ -527,6 +792,39 @@ class _MyHomePageState extends State<MyHomePage> {
                                         '加载',
                                         style: TextStyle(
                                           fontSize: 16,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isRunning || _isLoading ? null : _runProject,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.lightGreen,
+                                  foregroundColor: Colors.black87,
+                                  elevation: 0,
+                                  side: BorderSide(
+                                    color: Colors.green[600]!,
+                                    width: 1,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
+                                ),
+                                child: _isRunning
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        '运行',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                               ),
