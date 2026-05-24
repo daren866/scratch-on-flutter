@@ -555,38 +555,65 @@ class _MyHomePageState extends State<MyHomePage> {
     final sprites = targets.where((t) => !t.isStage).toList()
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
-    return Stack(
-      children: [
-        if (stage.costumes.isNotEmpty)
-          Positioned.fill(
-            child: _buildCostumeWidget(
+    return Container(
+      width: 480,
+      height: 320,
+      color: Colors.white,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
+            _buildCostumeWidget(
               stage.costumes[stage.currentCostume],
               fit: BoxFit.cover,
-            ),
-          ),
-        ...sprites.map((sprite) {
-          if (!sprite.isVisible || sprite.costumes.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          final costume = sprite.costumes[sprite.currentCostume];
-          final screenX = (sprite.x + 240) * (480 / 480);
-          final screenY = (180 - sprite.y) * (320 / 360);
-
-          return Positioned(
-            left: screenX - (costume.rotationCenterX * sprite.size / 100),
-            top: screenY - (costume.rotationCenterY * sprite.size / 100),
-            child: Transform.scale(
-              scale: sprite.size / 100,
-              child: _buildCostumeWidget(
-                costume,
-                direction: sprite.direction,
-                rotationStyle: sprite.rotationStyle,
+            )
+          else
+            Container(
+              color: Colors.lightBlue[100],
+              child: const Center(
+                child: Text('舞台背景'),
               ),
             ),
-          );
-        }),
-      ],
+          ...sprites.map((sprite) {
+            if (!sprite.isVisible || sprite.costumes.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final costume = sprite.costumes[sprite.currentCostume];
+            if (costume.data.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final scratchStageWidth = 480.0;
+            final scratchStageHeight = 360.0;
+            final renderWidth = 480.0;
+            final renderHeight = 320.0;
+
+            final scaleX = renderWidth / scratchStageWidth;
+            final scaleY = renderHeight / scratchStageHeight;
+
+            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
+            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
+
+            return Positioned(
+              left: screenX - (costume.rotationCenterX * scaleX * sprite.size / 100),
+              top: screenY - (costume.rotationCenterY * scaleY * sprite.size / 100),
+              child: Transform.scale(
+                scale: sprite.size / 100,
+                child: Transform.rotate(
+                  angle: sprite.rotationStyle == 'all around' 
+                      ? (sprite.direction - 90) * 3.1415926535 / 180 
+                      : 0,
+                  child: Image.memory(
+                    costume.data,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -605,23 +632,13 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
 
-    Widget imageWidget;
-    if (costume.dataFormat == 'svg') {
-      imageWidget = Image.memory(
-        costume.data,
-        fit: fit,
-        width: costume.bitmapResolution == 1 ? null : 100.0,
-        height: costume.bitmapResolution == 1 ? null : 100.0,
-      );
-    } else {
-      imageWidget = Image.memory(
-        costume.data,
-        fit: fit,
-      );
-    }
+    Widget imageWidget = Image.memory(
+      costume.data,
+      fit: fit,
+    );
 
     if (rotationStyle == 'all around') {
-      final rotation = (direction - 90) * 3.14159 / 180;
+      final rotation = (direction - 90) * 3.1415926535 / 180;
       return Transform.rotate(
         angle: rotation,
         child: imageWidget,
