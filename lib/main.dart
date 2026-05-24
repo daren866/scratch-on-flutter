@@ -28,6 +28,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _filePathController = TextEditingController(
+    text: 'C:\\xxxx\\xxxx.sb3',
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,21 +96,22 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                        TextField(
+                          controller: _filePathController,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'C:\\xxxx\\xxxx.sb3',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.grey[200],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
                           ),
                         ),
@@ -114,42 +119,48 @@ class _MyHomePageState extends State<MyHomePage> {
                         Row(
                           children: [
                             Expanded(
-                              child: Container(
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  border: Border.all(
+                              child: ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey[300],
+                                  foregroundColor: Colors.black87,
+                                  elevation: 0,
+                                  side: BorderSide(
                                     color: Colors.black38,
                                     width: 1,
                                   ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                 ),
-                                alignment: Alignment.center,
                                 child: const Text(
                                   '渲染',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.black87,
                                   ),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Container(
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[300],
-                                  border: Border.all(
+                              child: ElevatedButton(
+                                onPressed: () {},
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey[300],
+                                  foregroundColor: Colors.black87,
+                                  elevation: 0,
+                                  side: BorderSide(
                                     color: Colors.black38,
                                     width: 1,
                                   ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10,
+                                  ),
                                 ),
-                                alignment: Alignment.center,
                                 child: const Text(
                                   '加载',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.black87,
                                   ),
                                 ),
                               ),
