@@ -905,22 +905,31 @@ class _MyHomePageState extends State<MyHomePage> {
 
             final effectiveScale = sprite.size / 100 / costume.bitmapResolution;
 
+            Matrix4 transform = Matrix4.identity();
+            
+            if (sprite.rotationStyle == 'all around') {
+              transform = Matrix4.identity()
+                ..setEntry(0, 0, math.cos((sprite.direction - 90) * math.pi / 180))
+                ..setEntry(0, 1, -math.sin((sprite.direction - 90) * math.pi / 180))
+                ..setEntry(1, 0, math.sin((sprite.direction - 90) * math.pi / 180))
+                ..setEntry(1, 1, math.cos((sprite.direction - 90) * math.pi / 180));
+            }
+            
+            transform = transform
+              ..scale(effectiveScale, effectiveScale)
+              ..translate(
+                <double>[
+                  -costume.rotationCenterX.toDouble(),
+                  -costume.rotationCenterY.toDouble(),
+                  0,
+                ],
+              );
+
             return Positioned(
               left: screenX,
               top: screenY,
               child: Transform(
-                transform: Matrix4.identity()
-                  ..rotateZ(sprite.rotationStyle == 'all around'
-                      ? (sprite.direction - 90) * math.pi / 180
-                      : 0)
-                  ..scale(effectiveScale, effectiveScale)
-                  ..translate(
-                    <double>[
-                      -costume.rotationCenterX.toDouble(),
-                      -costume.rotationCenterY.toDouble(),
-                      0,
-                    ],
-                  ),
+                transform: transform,
                 alignment: Alignment.topLeft,
                 child: image,
               ),
