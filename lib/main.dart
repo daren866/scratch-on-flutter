@@ -91,7 +91,7 @@ class StageRenderer extends CustomPainter {
     }
 
     canvas.scale(scale);
-    canvas.translate(-costume.rotationCenterX, -costume.rotationCenterY);
+    canvas.translate(-costume.rotationCenterX.toDouble(), -costume.rotationCenterY.toDouble());
 
     if (costume.dataFormat == 'svg') {
       _drawSvg(canvas, costume.data, stageWidth, stageHeight);
@@ -146,17 +146,7 @@ class SvgDrawable {
   final String svgString;
   SvgDrawable(this.svgString);
 
-  void draw(Canvas canvas, Size size) {
-    try {
-      final svgPicture = SvgPicture.string(
-        svgString,
-        width: size.width,
-        height: size.height,
-      );
-    } catch (e) {
-      debugPrint('SVG draw error: $e');
-    }
-  }
+  void draw(Canvas canvas, Size size) {}
 }
 
 void main() {
