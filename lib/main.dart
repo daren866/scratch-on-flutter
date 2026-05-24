@@ -280,14 +280,14 @@ class _MyHomePageState extends State<MyHomePage> {
       y: (targetJson['y'] ?? 0).toDouble(),
       direction: (targetJson['direction'] ?? 90).toDouble(),
       size: (targetJson['size'] ?? 100).toDouble(),
-      currentCostume: targetJson['currentCostume'] ?? 0,
+      currentCostume: ((targetJson['currentCostume'] ?? 0) as num).toInt(),
       variables: Map<String, dynamic>.from(targetJson['variables'] ?? {}),
       lists: Map<String, dynamic>.from(targetJson['lists'] ?? {}),
       broadcasts: Map<String, dynamic>.from(targetJson['broadcasts'] ?? {}),
       blocks: Map<String, dynamic>.from(targetJson['blocks'] ?? {}),
       costumes: costumes,
       sounds: sounds,
-      layerOrder: targetJson['layerOrder'] ?? 0,
+      layerOrder: ((targetJson['layerOrder'] ?? 0) as num).toInt(),
       volume: (targetJson['volume'] ?? 100).toDouble(),
       rotationStyle: targetJson['rotationStyle'] ?? 'all around',
     );
@@ -310,9 +310,9 @@ class _MyHomePageState extends State<MyHomePage> {
       md5ext: md5ext,
       dataFormat: dataFormat,
       data: data ?? Uint8List(0),
-      rotationCenterX: costumeJson['rotationCenterX'] ?? 0,
-      rotationCenterY: costumeJson['rotationCenterY'] ?? 0,
-      bitmapResolution: costumeJson['bitmapResolution'] ?? 1,
+      rotationCenterX: ((costumeJson['rotationCenterX'] ?? 0) as num).toInt(),
+      rotationCenterY: ((costumeJson['rotationCenterY'] ?? 0) as num).toInt(),
+      bitmapResolution: ((costumeJson['bitmapResolution'] ?? 1) as num).toInt(),
     );
   }
 
@@ -334,8 +334,8 @@ class _MyHomePageState extends State<MyHomePage> {
       dataFormat: dataFormat,
       data: data ?? Uint8List(0),
       format: soundJson['format'] ?? '',
-      rate: soundJson['rate'] ?? 44100,
-      sampleCount: soundJson['sampleCount'] ?? 0,
+      rate: ((soundJson['rate'] ?? 44100) as num).toInt(),
+      sampleCount: ((soundJson['sampleCount'] ?? 0) as num).toInt(),
     );
   }
 
