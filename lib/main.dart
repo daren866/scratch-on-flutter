@@ -69,13 +69,13 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.black38,
-                                width: 2,
-                              ),
+                        Container(
+                          width: 480,
+                          height: 320,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.black38,
+                              width: 2,
                             ),
                           ),
                         ),
