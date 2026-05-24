@@ -1,0 +1,87 @@
+name: Build and Release Flutter Windows App
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze project source
+        run: dart analyze
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Get package info
+        id: package_info
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1 | tr -d ' ')
+          if [ -z "$VERSION" ]; then
+            if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+              VERSION=${GITHUB_REF#refs/tags/}
+            else
+              VERSION="${GITHUB_SHA:0:7}"
+            fi
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Final version: $VERSION"
+
+      - name: Create ZIP package
+        shell: powershell
+        run: |
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath windows-app-${{ steps.package_info.outputs.version }}.zip
+          echo "Created ZIP: windows-app-${{ steps.package_info.outputs.version }}.zip"
+
+      - name: Create Release and Upload ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            windows-app-${{ steps.package_info.outputs.version }}.zip
+          name: Release ${{ steps.package_info.outputs.version }}
+          tag_name: ${{ steps.package_info.outputs.version }}
+          body: |
+            ## 🚀 Flutter Windows 应用
+            
+            - **版本**: ${{ steps.package_info.outputs.version }}
+            - **构建时间**: ${{ github.event.head_commit.timestamp || '手动触发' }}
+            
+            ### 使用方法
+            1. 下载 `windows-app-${{ steps.package_info.outputs.version }}.zip`
+            2. 解压到任意目录
+            3. 运行 `my_app.exe`
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload ZIP artifact (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-app-${{ steps.package_info.outputs.version }}
+          path: windows-app-${{ steps.package_info.outputs.version }}.zip
