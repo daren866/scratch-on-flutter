@@ -80,16 +80,16 @@ class ScratchTarget {
   double y;
   double direction;
   double size;
-  final int currentCostume;
+  int currentCostume;
   final Map<String, dynamic> variables;
   final Map<String, dynamic> lists;
   final Map<String, dynamic> broadcasts;
   final Map<String, dynamic> blocks;
   final List<ScratchCostume> costumes;
   final List<ScratchSound> sounds;
-  final int layerOrder;
-  final double volume;
-  final String rotationStyle;
+  int layerOrder;
+  double volume;
+  String rotationStyle;
 
   ScratchTarget({
     required this.name,
@@ -669,16 +669,16 @@ class BlockExecutor {
   }
 
   Future<void> _executeMotionIfOnEdgeBounce(ScratchTarget target, Map<String, dynamic> block) async {
-    final bounds = 240;
+    final bounds = 240.0;
     double newDirection = target.direction;
     
     if (target.x.abs() > bounds) {
       newDirection = 180 - newDirection;
       target.setX(target.x > 0 ? bounds : -bounds);
     }
-    if (target.y.abs() > 180) {
+    if (target.y.abs() > 180.0) {
       newDirection = -newDirection;
-      target.setY(target.y > 0 ? 180 : -180);
+      target.setY(target.y > 0 ? 180.0 : -180.0);
     }
     
     target.setDirection(newDirection);
@@ -818,7 +818,7 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final sizeData = inputs['SIZE'] as List?;
     final size = sizeData != null && sizeData.length >= 2 ? _castToNumber(sizeData[1]) : 100;
-    target.size = size.clamp(0, 1000);
+    target.size = (size.clamp(0, 1000)).toDouble();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
