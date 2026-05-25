@@ -156,11 +156,18 @@ class ProjectBank {
 class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
+  final VoidCallback? onFrameUpdate;
 
-  BlockExecutor(this.projectBank);
+  BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
+  }
+
+  void _notifyFrameUpdate() {
+    if (onFrameUpdate != null) {
+      onFrameUpdate!();
+    }
   }
 
   Future<void> run() async {
@@ -943,6 +950,10 @@ class BlockExecutor {
     
     for (int i = 0; i < times.toInt() && isRunning; i++) {
       await _executeBlockChain(target, substackBlockId);
+      if (isRunning) {
+        await Future.delayed(const Duration(milliseconds: 33));
+        _notifyFrameUpdate();
+      }
     }
   }
 
@@ -958,6 +969,10 @@ class BlockExecutor {
     
     while (isRunning) {
       await _executeBlockChain(target, substackBlockId);
+      if (isRunning) {
+        await Future.delayed(const Duration(milliseconds: 33));
+        _notifyFrameUpdate();
+      }
     }
   }
 
@@ -1389,7 +1404,14 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    _currentExecutor = BlockExecutor(_projectBank!);
+    _currentExecutor = BlockExecutor(
+      _projectBank!,
+      onFrameUpdate: () {
+        if (mounted) {
+          setState(() {});
+        }
+      },
+    );
 
     setState(() {
       _isRunning = true;
@@ -1398,19 +1420,23 @@ class _MyHomePageState extends State<MyHomePage> {
 
     await _currentExecutor!.run();
 
-    setState(() {
-      _isRunning = false;
-      _currentExecutor = null;
-      _statusMessage = '运行完成！';
-    });
+    if (mounted) {
+      setState(() {
+        _isRunning = false;
+        _currentExecutor = null;
+        _statusMessage = '运行完成！';
+      });
+    }
   }
 
   void _stopProject() {
     if (_currentExecutor != null) {
       _currentExecutor!.stop();
-      setState(() {
-        _statusMessage = '已停止';
-      });
+      if (mounted) {
+        setState(() {
+          _statusMessage = '已停止';
+        });
+      }
     }
   }
 
