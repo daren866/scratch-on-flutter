@@ -929,23 +929,31 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final timesData = inputs['TIMES'] as List?;
     final times = timesData != null && timesData.length >= 2 ? _castToNumber(timesData[1]) : 1;
+    final substack = inputs['SUBSTACK'] as List?;
+    
+    if (substack == null || substack.length < 2) {
+      return;
+    }
+    
+    final substackBlockId = substack[1] as String;
     
     for (int i = 0; i < times.toInt() && isRunning; i++) {
-      final substack = block['inputs']?['SUBSTACK'] as List?;
-      if (substack != null && substack.length >= 2) {
-        await _executeBlockChain(target, substack[1] as String);
-      }
+      await _executeBlockChain(target, substackBlockId);
     }
   }
 
   Future<void> _executeControlForever(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final substack = inputs['SUBSTACK'] as List?;
+    
+    if (substack == null || substack.length < 2) {
+      return;
+    }
+    
+    final substackBlockId = substack[1] as String;
+    
     while (isRunning) {
-      final substack = block['inputs']?['SUBSTACK'] as List?;
-      if (substack != null && substack.length >= 2) {
-        await _executeBlockChain(target, substack[1] as String);
-      } else {
-        await Future.delayed(const Duration(milliseconds: 100));
-      }
+      await _executeBlockChain(target, substackBlockId);
     }
   }
 
