@@ -231,6 +231,219 @@ class BlockExecutor {
       case 'motion_sety':
         await _executeMotionSetY(target, block);
         break;
+      case 'motion_goto':
+        await _executeMotionGoTo(target, block);
+        break;
+      case 'motion_pointtowards':
+        await _executeMotionPointTowards(target, block);
+        break;
+      case 'motion_ifonedgebounce':
+        await _executeMotionIfOnEdgeBounce(target, block);
+        break;
+      case 'motion_setrotationstyle':
+        await _executeMotionSetRotationStyle(target, block);
+        break;
+      case 'motion_glidesecstoxy':
+        await _executeMotionGlideSecsToXY(target, block);
+        break;
+      case 'looks_say':
+        await _executeLooksSay(target, block);
+        break;
+      case 'looks_sayforsecs':
+        await _executeLooksSayForSecs(target, block);
+        break;
+      case 'looks_think':
+        await _executeLooksThink(target, block);
+        break;
+      case 'looks_thinkforsecs':
+        await _executeLooksThinkForSecs(target, block);
+        break;
+      case 'looks_show':
+        await _executeLooksShow(target, block);
+        break;
+      case 'looks_hide':
+        await _executeLooksHide(target, block);
+        break;
+      case 'looks_nextcostume':
+        await _executeLooksNextCostume(target, block);
+        break;
+      case 'looks_switchcostumeto':
+        await _executeLooksSwitchCostumeTo(target, block);
+        break;
+      case 'looks_nextbackdrop':
+        await _executeLooksNextBackdrop(target, block);
+        break;
+      case 'looks_switchbackdropto':
+        await _executeLooksSwitchBackdropTo(target, block);
+        break;
+      case 'looks_changesizeby':
+        await _executeLooksChangeSizeBy(target, block);
+        break;
+      case 'looks_setsizeto':
+        await _executeLooksSetSizeTo(target, block);
+        break;
+      case 'looks_gotofrontback':
+        await _executeLooksGoToFrontBack(target, block);
+        break;
+      case 'looks_goforwardbackwardlayers':
+        await _executeLooksGoForwardBackwardLayers(target, block);
+        break;
+      case 'looks_changeeffectby':
+        await _executeLooksChangeEffectBy(target, block);
+        break;
+      case 'looks_seteffectto':
+        await _executeLooksSetEffectTo(target, block);
+        break;
+      case 'looks_cleargraphiceffects':
+        await _executeLooksClearGraphicEffects(target, block);
+        break;
+      case 'sound_play':
+        await _executeSoundPlay(target, block);
+        break;
+      case 'sound_playuntildone':
+        await _executeSoundPlayUntilDone(target, block);
+        break;
+      case 'sound_stopallsounds':
+        await _executeSoundStopAllSounds(target, block);
+        break;
+      case 'sound_setvolumeto':
+        await _executeSoundSetVolumeTo(target, block);
+        break;
+      case 'sound_changevolumeby':
+        await _executeSoundChangeVolumeBy(target, block);
+        break;
+      case 'event_broadcast':
+        await _executeEventBroadcast(target, block);
+        break;
+      case 'event_broadcastandwait':
+        await _executeEventBroadcastAndWait(target, block);
+        break;
+      case 'control_wait':
+        await _executeControlWait(target, block);
+        break;
+      case 'control_repeat':
+        await _executeControlRepeat(target, block);
+        break;
+      case 'control_forever':
+        await _executeControlForever(target, block);
+        break;
+      case 'control_if':
+        await _executeControlIf(target, block);
+        break;
+      case 'control_if_else':
+        await _executeControlIfElse(target, block);
+        break;
+      case 'control_stop':
+        await _executeControlStop(target, block);
+        break;
+      case 'control_create_clone_of':
+        await _executeControlCreateCloneOf(target, block);
+        break;
+      case 'control_delete_this_clone':
+        await _executeControlDeleteThisClone(target, block);
+        break;
+      case 'operator_add':
+        await _executeOperatorAdd(target, block);
+        break;
+      case 'operator_subtract':
+        await _executeOperatorSubtract(target, block);
+        break;
+      case 'operator_multiply':
+        await _executeOperatorMultiply(target, block);
+        break;
+      case 'operator_divide':
+        await _executeOperatorDivide(target, block);
+        break;
+      case 'operator_random':
+        await _executeOperatorRandom(target, block);
+        break;
+      case 'operator_join':
+        await _executeOperatorJoin(target, block);
+        break;
+      case 'operator_letter_of':
+        await _executeOperatorLetterOf(target, block);
+        break;
+      case 'operator_length':
+        await _executeOperatorLength(target, block);
+        break;
+      case 'operator_round':
+        await _executeOperatorRound(target, block);
+        break;
+      case 'operator_mod':
+        await _executeOperatorMod(target, block);
+        break;
+      case 'operator_lt':
+        await _executeOperatorLt(target, block);
+        break;
+      case 'operator_equals':
+        await _executeOperatorEquals(target, block);
+        break;
+      case 'operator_gt':
+        await _executeOperatorGt(target, block);
+        break;
+      case 'operator_and':
+        await _executeOperatorAnd(target, block);
+        break;
+      case 'operator_or':
+        await _executeOperatorOr(target, block);
+        break;
+      case 'operator_not':
+        await _executeOperatorNot(target, block);
+        break;
+      case 'operator_contains':
+        await _executeOperatorContains(target, block);
+        break;
+      case 'data_setvariableto':
+        await _executeDataSetVariableTo(target, block);
+        break;
+      case 'data_changevariableby':
+        await _executeDataChangeVariableBy(target, block);
+        break;
+      case 'data_addtolist':
+        await _executeDataAddToList(target, block);
+        break;
+      case 'data_deleteoflist':
+        await _executeDataDeleteOfList(target, block);
+        break;
+      case 'data_deletealloflist':
+        await _executeDataDeleteAllOfList(target, block);
+        break;
+      case 'data_insertatlist':
+        await _executeDataInsertAtList(target, block);
+        break;
+      case 'data_replaceitemoflist':
+        await _executeDataReplaceItemOfList(target, block);
+        break;
+      case 'sensing_touchingobject':
+        await _executeSensingTouchingObject(target, block);
+        break;
+      case 'sensing_touchingcolor':
+        await _executeSensingTouchingColor(target, block);
+        break;
+      case 'sensing_distanceto':
+        await _executeSensingDistanceTo(target, block);
+        break;
+      case 'sensing_mousex':
+        await _executeSensingMouseX(target, block);
+        break;
+      case 'sensing_mousey':
+        await _executeSensingMouseY(target, block);
+        break;
+      case 'sensing_mousedown':
+        await _executeSensingMouseDown(target, block);
+        break;
+      case 'sensing_keypressed':
+        await _executeSensingKeyPressed(target, block);
+        break;
+      case 'sensing_timer':
+        await _executeSensingTimer(target, block);
+        break;
+      case 'sensing_resettimer':
+        await _executeSensingResetTimer(target, block);
+        break;
+      case 'sensing_askandwait':
+        await _executeSensingAskAndWait(target, block);
+        break;
     }
   }
 
@@ -374,6 +587,562 @@ class BlockExecutor {
       return parsed ?? 0;
     }
     return 0;
+  }
+
+  String _castToString(dynamic value) {
+    if (value is String) {
+      return value;
+    }
+    if (value is List && value.isNotEmpty) {
+      return _castToString(value[1]);
+    }
+    return value?.toString() ?? '';
+  }
+
+  bool _castToBoolean(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is List && value.isNotEmpty) {
+      return _castToBoolean(value[1]);
+    }
+    if (value is String) {
+      final lower = value.toLowerCase();
+      return lower != '' && lower != '0' && lower != 'false';
+    }
+    return false;
+  }
+
+  Future<void> _executeMotionGoTo(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final toData = fields['TO'] as List?;
+    final to = toData != null && toData.isNotEmpty ? _castToString(toData[0]) : '';
+    
+    if (to == '_mouse_') {
+      target.setXY(0, 0);
+    } else if (to == '_random_') {
+      target.setXY((math.Random().nextDouble() - 0.5) * 480, (math.Random().nextDouble() - 0.5) * 360);
+    } else {
+      final sprite = projectBank.targets.firstWhere(
+        (t) => !t.isStage && t.name == to,
+        orElse: () => target,
+      );
+      target.setXY(sprite.x, sprite.y);
+    }
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeMotionPointTowards(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final towardsData = fields['TOWARDS'] as List?;
+    final towards = towardsData != null && towardsData.isNotEmpty ? _castToString(towardsData[0]) : '';
+    
+    double targetX = 0;
+    double targetY = 0;
+    
+    if (towards == '_mouse_') {
+      targetX = 0;
+      targetY = 0;
+    } else if (towards == '_random_') {
+      targetX = (math.Random().nextDouble() - 0.5) * 480;
+      targetY = (math.Random().nextDouble() - 0.5) * 360;
+    } else {
+      final sprite = projectBank.targets.firstWhere(
+        (t) => !t.isStage && t.name == towards,
+        orElse: () => target,
+      );
+      targetX = sprite.x;
+      targetY = sprite.y;
+    }
+    
+    final dx = targetX - target.x;
+    final dy = targetY - target.y;
+    double angle = math.atan2(dy, dx) * 180 / math.pi;
+    angle = (angle + 90) % 360;
+    if (angle < 0) angle += 360;
+    
+    target.setDirection(angle);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeMotionIfOnEdgeBounce(ScratchTarget target, Map<String, dynamic> block) async {
+    final bounds = 240;
+    double newDirection = target.direction;
+    
+    if (target.x.abs() > bounds) {
+      newDirection = 180 - newDirection;
+      target.setX(target.x > 0 ? bounds : -bounds);
+    }
+    if (target.y.abs() > 180) {
+      newDirection = -newDirection;
+      target.setY(target.y > 0 ? 180 : -180);
+    }
+    
+    target.setDirection(newDirection);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeMotionSetRotationStyle(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final styleData = fields['STYLE'] as List?;
+    final style = styleData != null && styleData.isNotEmpty ? _castToString(styleData[0]) : 'all around';
+    target.rotationStyle = style;
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeMotionGlideSecsToXY(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final secsData = inputs['SECS'] as List?;
+    final xData = inputs['X'] as List?;
+    final yData = inputs['Y'] as List?;
+    
+    final secs = secsData != null && secsData.length >= 2 ? _castToNumber(secsData[1]) : 1;
+    final targetX = xData != null && xData.length >= 2 ? _castToNumber(xData[1]) : 0;
+    final targetY = yData != null && yData.length >= 2 ? _castToNumber(yData[1]) : 0;
+    
+    final startX = target.x;
+    final startY = target.y;
+    final steps = 20;
+    final stepDuration = (secs * 1000) / steps;
+    
+    for (int i = 1; i <= steps; i++) {
+      if (!isRunning) break;
+      final t = i / steps;
+      target.setXY(startX + (targetX - startX) * t, startY + (targetY - startY) * t);
+      await Future.delayed(Duration(milliseconds: stepDuration.round()));
+    }
+  }
+
+  Future<void> _executeLooksSay(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final messageData = inputs['MESSAGE'] as List?;
+    final message = messageData != null && messageData.length >= 2 ? _castToString(messageData[1]) : '';
+    debugPrint('角色 ${target.name} 说: $message');
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeLooksSayForSecs(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final messageData = inputs['MESSAGE'] as List?;
+    final secsData = inputs['SECS'] as List?;
+    
+    final message = messageData != null && messageData.length >= 2 ? _castToString(messageData[1]) : '';
+    final secs = secsData != null && secsData.length >= 2 ? _castToNumber(secsData[1]) : 1;
+    
+    debugPrint('角色 ${target.name} 说: $message (持续 $secs 秒)');
+    await Future.delayed(Duration(milliseconds: (secs * 1000).round()));
+  }
+
+  Future<void> _executeLooksThink(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final messageData = inputs['MESSAGE'] as List?;
+    final message = messageData != null && messageData.length >= 2 ? _castToString(messageData[1]) : '';
+    debugPrint('角色 ${target.name} 想: $message');
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeLooksThinkForSecs(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final messageData = inputs['MESSAGE'] as List?;
+    final secsData = inputs['SECS'] as List?;
+    
+    final message = messageData != null && messageData.length >= 2 ? _castToString(messageData[1]) : '';
+    final secs = secsData != null && secsData.length >= 2 ? _castToNumber(secsData[1]) : 1;
+    
+    debugPrint('角色 ${target.name} 想: $message (持续 $secs 秒)');
+    await Future.delayed(Duration(milliseconds: (secs * 1000).round()));
+  }
+
+  Future<void> _executeLooksShow(ScratchTarget target, Map<String, dynamic> block) async {
+    target.isVisible = true;
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksHide(ScratchTarget target, Map<String, dynamic> block) async {
+    target.isVisible = false;
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksNextCostume(ScratchTarget target, Map<String, dynamic> block) async {
+    if (target.costumes.isNotEmpty) {
+      target.currentCostume = (target.currentCostume + 1) % target.costumes.length;
+    }
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeLooksSwitchCostumeTo(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final costumeData = fields['COSTUME'] as List?;
+    final costumeName = costumeData != null && costumeData.isNotEmpty ? _castToString(costumeData[0]) : '';
+    
+    final index = target.costumes.indexWhere((c) => c.name == costumeName);
+    if (index != -1) {
+      target.currentCostume = index;
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksNextBackdrop(ScratchTarget target, Map<String, dynamic> block) async {
+    final stage = projectBank.targets.firstWhere((t) => t.isStage);
+    if (stage.costumes.isNotEmpty) {
+      stage.currentCostume = (stage.currentCostume + 1) % stage.costumes.length;
+    }
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeLooksSwitchBackdropTo(ScratchTarget target, Map<String, dynamic> block) async {
+    final stage = projectBank.targets.firstWhere((t) => t.isStage);
+    final fields = block['fields'] as Map? ?? {};
+    final backdropData = fields['BACKDROP'] as List?;
+    final backdropName = backdropData != null && backdropData.isNotEmpty ? _castToString(backdropData[0]) : '';
+    
+    final index = stage.costumes.indexWhere((c) => c.name == backdropName);
+    if (index != -1) {
+      stage.currentCostume = index;
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksChangeSizeBy(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final changeData = inputs['CHANGE'] as List?;
+    final change = changeData != null && changeData.length >= 2 ? _castToNumber(changeData[1]) : 0;
+    target.size = (target.size + change).clamp(0, 1000);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksSetSizeTo(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final sizeData = inputs['SIZE'] as List?;
+    final size = sizeData != null && sizeData.length >= 2 ? _castToNumber(sizeData[1]) : 100;
+    target.size = size.clamp(0, 1000);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksGoToFrontBack(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final frontBackData = fields['FRONTBACK'] as List?;
+    final frontBack = frontBackData != null && frontBackData.isNotEmpty ? _castToString(frontBackData[0]) : '';
+    
+    if (frontBack == 'front') {
+      target.layerOrder = projectBank.targets.fold(0, (max, t) => math.max(max, t.layerOrder)) + 1;
+    } else {
+      target.layerOrder = 0;
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksGoForwardBackwardLayers(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final layersData = inputs['LAYERS'] as List?;
+    final layers = layersData != null && layersData.length >= 2 ? _castToNumber(layersData[1]) : 0;
+    target.layerOrder = (target.layerOrder + layers).clamp(0, 1000);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksChangeEffectBy(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksSetEffectTo(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeLooksClearGraphicEffects(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeSoundPlay(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final soundData = fields['SOUND_MENU'] as List?;
+    final soundName = soundData != null && soundData.isNotEmpty ? _castToString(soundData[0]) : '';
+    debugPrint('播放声音: $soundName');
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeSoundPlayUntilDone(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final soundData = fields['SOUND_MENU'] as List?;
+    final soundName = soundData != null && soundData.isNotEmpty ? _castToString(soundData[0]) : '';
+    debugPrint('播放声音直到完成: $soundName');
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
+    debugPrint('停止所有声音');
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeSoundSetVolumeTo(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final volumeData = inputs['VOLUME'] as List?;
+    final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
+    target.volume = volume.clamp(0, 100);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeSoundChangeVolumeBy(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final volumeData = inputs['VOLUME'] as List?;
+    final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
+    target.volume = (target.volume + volume).clamp(0, 100);
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeEventBroadcast(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final broadcastData = fields['BROADCAST_OPTION'] as List?;
+    final broadcastOption = broadcastData != null && broadcastData.isNotEmpty ? _castToString(broadcastData[0]) : '';
+    
+    debugPrint('广播: $broadcastOption');
+    
+    for (final t in projectBank.targets) {
+      for (final entry in t.blocks.entries) {
+        final blockData = entry.value;
+        if (blockData is Map && blockData['opcode'] == 'event_whenbroadcastreceived') {
+          final bFields = blockData['fields'] as Map? ?? {};
+          final bData = bFields['BROADCAST_OPTION'] as List?;
+          final bOption = bData != null && bData.isNotEmpty ? _castToString(bData[0]) : '';
+          if (bOption == broadcastOption) {
+            await _executeBlockChain(t, entry.key);
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _executeEventBroadcastAndWait(ScratchTarget target, Map<String, dynamic> block) async {
+    await _executeEventBroadcast(target, block);
+  }
+
+  Future<void> _executeControlWait(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final durationData = inputs['DURATION'] as List?;
+    final duration = durationData != null && durationData.length >= 2 ? _castToNumber(durationData[1]) : 1;
+    await Future.delayed(Duration(milliseconds: (duration * 1000).round()));
+  }
+
+  Future<void> _executeControlRepeat(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final timesData = inputs['TIMES'] as List?;
+    final times = timesData != null && timesData.length >= 2 ? _castToNumber(timesData[1]) : 1;
+    
+    for (int i = 0; i < times.toInt() && isRunning; i++) {
+      final substack = block['inputs']?['SUBSTACK'] as List?;
+      if (substack != null && substack.length >= 2) {
+        await _executeBlockChain(target, substack[1] as String);
+      }
+    }
+  }
+
+  Future<void> _executeControlForever(ScratchTarget target, Map<String, dynamic> block) async {
+    while (isRunning) {
+      final substack = block['inputs']?['SUBSTACK'] as List?;
+      if (substack != null && substack.length >= 2) {
+        await _executeBlockChain(target, substack[1] as String);
+      } else {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+    }
+  }
+
+  Future<void> _executeControlIf(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final conditionData = inputs['CONDITION'] as List?;
+    bool condition = false;
+    
+    if (conditionData != null && conditionData.length >= 2) {
+      condition = _castToBoolean(conditionData[1]);
+    }
+    
+    if (condition) {
+      final substack = block['inputs']?['SUBSTACK'] as List?;
+      if (substack != null && substack.length >= 2) {
+        await _executeBlockChain(target, substack[1] as String);
+      }
+    }
+  }
+
+  Future<void> _executeControlIfElse(ScratchTarget target, Map<String, dynamic> block) async {
+    final inputs = block['inputs'] as Map? ?? {};
+    final conditionData = inputs['CONDITION'] as List?;
+    bool condition = false;
+    
+    if (conditionData != null && conditionData.length >= 2) {
+      condition = _castToBoolean(conditionData[1]);
+    }
+    
+    if (condition) {
+      final substack = block['inputs']?['SUBSTACK'] as List?;
+      if (substack != null && substack.length >= 2) {
+        await _executeBlockChain(target, substack[1] as String);
+      }
+    } else {
+      final substack2 = block['inputs']?['SUBSTACK2'] as List?;
+      if (substack2 != null && substack2.length >= 2) {
+        await _executeBlockChain(target, substack2[1] as String);
+      }
+    }
+  }
+
+  Future<void> _executeControlStop(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final stopOptionData = fields['STOP_OPTION'] as List?;
+    final stopOption = stopOptionData != null && stopOptionData.isNotEmpty ? _castToString(stopOptionData[0]) : 'all';
+    
+    if (stopOption == 'all') {
+      isRunning = false;
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeControlCreateCloneOf(ScratchTarget target, Map<String, dynamic> block) async {
+    debugPrint('创建克隆体');
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
+  Future<void> _executeControlDeleteThisClone(ScratchTarget target, Map<String, dynamic> block) async {
+    debugPrint('删除克隆体');
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeOperatorAdd(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorSubtract(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorMultiply(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorDivide(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorRandom(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorJoin(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorLetterOf(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorLength(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorRound(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorMod(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorLt(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorEquals(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorGt(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorAnd(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorOr(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorNot(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeOperatorContains(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeDataSetVariableTo(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeDataChangeVariableBy(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeDataAddToList(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeDataDeleteOfList(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeDataDeleteAllOfList(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeDataInsertAtList(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeDataReplaceItemOfList(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  Future<void> _executeSensingTouchingObject(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingTouchingColor(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingDistanceTo(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingMouseX(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingMouseY(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingMouseDown(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingKeyPressed(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingTimer(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingResetTimer(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  Future<void> _executeSensingAskAndWait(ScratchTarget target, Map<String, dynamic> block) async {
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 }
 
