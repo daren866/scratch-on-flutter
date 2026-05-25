@@ -839,7 +839,7 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final layersData = inputs['LAYERS'] as List?;
     final layers = layersData != null && layersData.length >= 2 ? _castToNumber(layersData[1]) : 0;
-    target.layerOrder = (target.layerOrder + layers).clamp(0, 1000);
+    target.layerOrder = ((target.layerOrder + layers).clamp(0, 1000)).toInt();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -880,7 +880,7 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
-    target.volume = volume.clamp(0, 100);
+    target.volume = (volume.clamp(0, 100)).toDouble();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -888,7 +888,7 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
-    target.volume = (target.volume + volume).clamp(0, 100);
+    target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
