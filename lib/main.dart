@@ -173,22 +173,24 @@ class BlockExecutor {
   Future<void> run() async {
     isRunning = true;
     final greenFlagBlocks = <MapEntry<String, dynamic>>[];
+    final targetByBlockId = <String, ScratchTarget>{};
 
     for (final target in projectBank.targets) {
       for (final entry in target.blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenflagclicked') {
           greenFlagBlocks.add(entry);
+          targetByBlockId[entry.key] = target;
         }
       }
     }
 
-    for (final entry in greenFlagBlocks) {
-      final target = projectBank.targets.firstWhere(
-        (t) => t.blocks.containsKey(entry.key),
-      );
-      await _executeBlockChain(target, entry.key);
-    }
+    final futures = greenFlagBlocks.map((entry) {
+      final target = targetByBlockId[entry.key];
+      return _executeBlockChain(target!, entry.key);
+    }).toList();
+
+    await Future.wait(futures);
 
     isRunning = false;
   }
