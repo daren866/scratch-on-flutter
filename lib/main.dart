@@ -159,6 +159,10 @@ class BlockExecutor {
 
   BlockExecutor(this.projectBank);
 
+  void stop() {
+    isRunning = false;
+  }
+
   Future<void> run() async {
     isRunning = true;
     final greenFlagBlocks = <MapEntry<String, dynamic>>[];
@@ -1375,6 +1379,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   bool _isRunning = false;
+  BlockExecutor? _currentExecutor;
 
   Future<void> _runProject() async {
     if (_projectBank == null) {
@@ -1384,18 +1389,29 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
+    _currentExecutor = BlockExecutor(_projectBank!);
+
     setState(() {
       _isRunning = true;
       _statusMessage = '运行中...';
     });
 
-    final executor = BlockExecutor(_projectBank!);
-    await executor.run();
+    await _currentExecutor!.run();
 
     setState(() {
       _isRunning = false;
+      _currentExecutor = null;
       _statusMessage = '运行完成！';
     });
+  }
+
+  void _stopProject() {
+    if (_currentExecutor != null) {
+      _currentExecutor!.stop();
+      setState(() {
+        _statusMessage = '已停止';
+      });
+    }
   }
 
   @override
@@ -1577,13 +1593,13 @@ class _MyHomePageState extends State<MyHomePage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _isRunning || _isLoading ? null : _runProject,
+                                onPressed: _isLoading ? null : (_isRunning ? _stopProject : _runProject),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.lightGreen,
-                                  foregroundColor: Colors.black87,
+                                  backgroundColor: _isRunning ? Colors.red : Colors.lightGreen,
+                                  foregroundColor: _isRunning ? Colors.white : Colors.black87,
                                   elevation: 0,
                                   side: BorderSide(
-                                    color: Colors.green[600]!,
+                                    color: _isRunning ? Colors.red[700]! : Colors.green[600]!,
                                     width: 1,
                                   ),
                                   padding: const EdgeInsets.symmetric(
@@ -1591,19 +1607,34 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ),
                                 child: _isRunning
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
+                                    ? const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.stop, size: 16, color: Colors.white),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            '停止',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
                                       )
-                                    : const Text(
-                                        '运行',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    : const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.play_arrow, size: 16),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            '运行',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                               ),
                             ),
