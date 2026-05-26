@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:audioplayers/src/audio_source.dart';
 
 import 'dart:convert';
 
@@ -159,7 +160,6 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
-  final AudioPlayer _audioPlayer = AudioPlayer();
   final List<AudioPlayer> _activePlayers = [];
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
@@ -901,9 +901,8 @@ class BlockExecutor {
         final player = AudioPlayer();
         _activePlayers.add(player);
         final source = AudioSource.bytes(sound.data);
-        await player.setSource(source);
         await player.setVolume(target.volume / 100);
-        await player.play();
+        await player.play(source);
         
         player.onPlayerComplete.listen((_) {
           player.dispose();
@@ -944,9 +943,8 @@ class BlockExecutor {
         final player = AudioPlayer();
         _activePlayers.add(player);
         final source = AudioSource.bytes(sound.data);
-        await player.setSource(source);
         await player.setVolume(target.volume / 100);
-        await player.play();
+        await player.play(source);
         
         await player.onPlayerComplete.first;
         player.dispose();
