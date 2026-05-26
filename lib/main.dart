@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
-import 'package:flutter_soloud/flutter_soloud.dart';
+
 import 'dart:convert';
 
 void main() {
@@ -158,15 +158,11 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
-  final Map<String, SoundHandle> _soundHandles = {};
-  final Map<String, AudioSource> _soundSources = {};
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
-    SoLoud.instance.stopAll();
-    _soundHandles.clear();
   }
 
   void _notifyFrameUpdate() {
@@ -895,13 +891,7 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final source = await _loadSound(sound);
-        if (source != null) {
-          _soundSources[soundName] = source;
-          final handle = await SoLoud.instance.play(source);
-          _soundHandles[soundName] = handle;
-          SoLoud.instance.setVolume(handle, target.volume / 100);
-        }
+        debugPrint('准备播放声音: ${sound.name}, 格式: ${sound.dataFormat}, 长度: ${sound.data.length}');
       } catch (e) {
         debugPrint('播放声音失败: $e');
       }
@@ -932,17 +922,8 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final source = await _loadSound(sound);
-        if (source != null) {
-          _soundSources[soundName] = source;
-          final handle = await SoLoud.instance.play(source);
-          _soundHandles[soundName] = handle;
-          SoLoud.instance.setVolume(handle, target.volume / 100);
-
-          while (SoLoud.instance.isActive(handle) && isRunning) {
-            await Future.delayed(const Duration(milliseconds: 50));
-          }
-        }
+        debugPrint('准备播放声音直到完成: ${sound.name}, 格式: ${sound.dataFormat}, 长度: ${sound.data.length}');
+        await Future.delayed(const Duration(milliseconds: 500));
       } catch (e) {
         debugPrint('播放声音失败: $e');
       }
@@ -951,23 +932,8 @@ class BlockExecutor {
     }
   }
 
-  Future<AudioSource?> _loadSound(ScratchSound sound) async {
-    try {
-      if (sound.dataFormat == 'wav') {
-        return await SoLoud.instance.loadFile(Uint8List.fromList(sound.data));
-      } else if (sound.dataFormat == 'mp3') {
-        return await SoLoud.instance.loadFile(Uint8List.fromList(sound.data));
-      }
-    } catch (e) {
-      debugPrint('加载声音失败: $e');
-    }
-    return null;
-  }
-
   Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
     debugPrint('停止所有声音');
-    SoLoud.instance.stopAll();
-    _soundHandles.clear();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -976,9 +942,6 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
     target.volume = (volume.clamp(0, 100)).toDouble();
-    for (final handle in _soundHandles.values) {
-      SoLoud.instance.setVolume(handle, target.volume / 100);
-    }
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -987,9 +950,6 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
     target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
-    for (final handle in _soundHandles.values) {
-      SoLoud.instance.setVolume(handle, target.volume / 100);
-    }
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -1276,27 +1236,6 @@ class _MyHomePageState extends State<MyHomePage> {
   ProjectBank? _projectBank;
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
-
-  @override
-  void initState() {
-    super.initState();
-    _initSoLoud();
-  }
-
-  Future<void> _initSoLoud() async {
-    try {
-      await SoLoud.instance.init();
-      debugPrint('SoLoud initialized successfully');
-    } catch (e) {
-      debugPrint('Failed to initialize SoLoud: $e');
-    }
-  }
-
-  @override
-  void dispose() {
-    SoLoud.instance.dispose();
-    super.dispose();
-  }
 
   Future<void> _pickFile() async {
     try {
