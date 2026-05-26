@@ -158,13 +158,14 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
-  final Map<String, int> _soundHandles = {};
+  final Map<String, SoundHandle> _soundHandles = {};
+  final Map<String, AudioSource> _soundSources = {};
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
-    SoLoud().stopAll();
+    SoLoud.instance.stopAll();
     _soundHandles.clear();
   }
 
@@ -894,11 +895,12 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final handle = await _loadSound(sound);
-        if (handle != 0) {
+        final source = await _loadSound(sound);
+        if (source != null) {
+          _soundSources[soundName] = source;
+          final handle = await SoLoud.instance.play(source);
           _soundHandles[soundName] = handle;
-          await SoLoud().play(handle);
-          SoLoud().setVolume(handle, target.volume / 100);
+          SoLoud.instance.setVolume(handle, target.volume / 100);
         }
       } catch (e) {
         debugPrint('播放声音失败: $e');
@@ -930,13 +932,14 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final handle = await _loadSound(sound);
-        if (handle != 0) {
+        final source = await _loadSound(sound);
+        if (source != null) {
+          _soundSources[soundName] = source;
+          final handle = await SoLoud.instance.play(source);
           _soundHandles[soundName] = handle;
-          await SoLoud().play(handle);
-          SoLoud().setVolume(handle, target.volume / 100);
+          SoLoud.instance.setVolume(handle, target.volume / 100);
 
-          while (SoLoud().isPlaying(handle) && isRunning) {
+          while (SoLoud.instance.isActive(handle) && isRunning) {
             await Future.delayed(const Duration(milliseconds: 50));
           }
         }
@@ -948,22 +951,22 @@ class BlockExecutor {
     }
   }
 
-  Future<int> _loadSound(ScratchSound sound) async {
+  Future<AudioSource?> _loadSound(ScratchSound sound) async {
     try {
       if (sound.dataFormat == 'wav') {
-        return await SoLoud().loadWav(sound.data);
+        return await SoLoud.instance.loadFile(Uint8List.fromList(sound.data));
       } else if (sound.dataFormat == 'mp3') {
-        return await SoLoud().loadMp3(sound.data);
+        return await SoLoud.instance.loadFile(Uint8List.fromList(sound.data));
       }
     } catch (e) {
       debugPrint('加载声音失败: $e');
     }
-    return 0;
+    return null;
   }
 
   Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
     debugPrint('停止所有声音');
-    SoLoud().stopAll();
+    SoLoud.instance.stopAll();
     _soundHandles.clear();
     await Future.delayed(const Duration(milliseconds: 50));
   }
@@ -974,7 +977,7 @@ class BlockExecutor {
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
     target.volume = (volume.clamp(0, 100)).toDouble();
     for (final handle in _soundHandles.values) {
-      SoLoud().setVolume(handle, target.volume / 100);
+      SoLoud.instance.setVolume(handle, target.volume / 100);
     }
     await Future.delayed(const Duration(milliseconds: 50));
   }
@@ -985,7 +988,7 @@ class BlockExecutor {
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
     target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
     for (final handle in _soundHandles.values) {
-      SoLoud().setVolume(handle, target.volume / 100);
+      SoLoud.instance.setVolume(handle, target.volume / 100);
     }
     await Future.delayed(const Duration(milliseconds: 50));
   }
@@ -1282,7 +1285,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initSoLoud() async {
     try {
-      await SoLoud().init();
+      await SoLoud.instance.init();
       debugPrint('SoLoud initialized successfully');
     } catch (e) {
       debugPrint('Failed to initialize SoLoud: $e');
@@ -1291,7 +1294,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    SoLoud().release();
+    SoLoud.instance.dispose();
     super.dispose();
   }
 
