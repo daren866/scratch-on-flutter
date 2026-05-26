@@ -1,27 +1,28 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:vector_math/vector_math_64.dart';
 import 'main.dart';
 
 class StageLayering {
-  static const int BACKGROUND_LAYER = 0;
-  static const int VIDEO_LAYER = 1;
-  static const int PEN_LAYER = 2;
-  static const int SPRITE_LAYER = 3;
+  static const int backgroundLayer = 0;
+  static const int videoLayer = 1;
+  static const int penLayer = 2;
+  static const int spriteLayer = 3;
 }
 
 class StageRenderer {
-  static const double STAGE_WIDTH = 480.0;
-  static const double STAGE_HEIGHT = 360.0;
-  static const double STAGE_CENTER_X = STAGE_WIDTH / 2;
-  static const double STAGE_CENTER_Y = STAGE_HEIGHT / 2;
+  static const double stageWidth = 480.0;
+  static const double stageHeight = 360.0;
+  static const double stageCenterX = stageWidth / 2;
+  static const double stageCenterY = stageHeight / 2;
 
   final Map<String, Drawable> _drawables = {};
   final List<int> _layerOrder = [
-    StageLayering.BACKGROUND_LAYER,
-    StageLayering.VIDEO_LAYER,
-    StageLayering.PEN_LAYER,
-    StageLayering.SPRITE_LAYER,
+    StageLayering.backgroundLayer,
+    StageLayering.videoLayer,
+    StageLayering.penLayer,
+    StageLayering.spriteLayer,
   ];
 
   String createDrawable(int layerGroup) {
@@ -98,10 +99,10 @@ class StageRenderer {
     final double x = position[0];
     final double y = position[1];
 
-    final double minX = -STAGE_WIDTH / 2;
-    final double maxX = STAGE_WIDTH / 2;
-    final double minY = -STAGE_HEIGHT / 2;
-    final double maxY = STAGE_HEIGHT / 2;
+    final double minX = -stageWidth / 2;
+    final double maxX = stageWidth / 2;
+    final double minY = -stageHeight / 2;
+    final double maxY = stageHeight / 2;
 
     return [
       math.max(minX, math.min(maxX, x)),
@@ -119,8 +120,8 @@ class StageRenderer {
 
   Widget buildStage(ProjectBank? projectBank) {
     return Container(
-      width: STAGE_WIDTH,
-      height: STAGE_HEIGHT,
+      width: stageWidth,
+      height: stageHeight,
       color: const Color(0xFF87CEEB),
       child: Stack(
         children: _buildLayers(projectBank),
@@ -153,7 +154,7 @@ class StageRenderer {
       }
     }
 
-    if (layerGroup == StageLayering.SPRITE_LAYER && projectBank != null) {
+    if (layerGroup == StageLayering.spriteLayer && projectBank != null) {
       for (final target in projectBank.targets) {
         if (!target.isStage) {
           final targetWidget = _buildSpriteTarget(target);
@@ -216,8 +217,8 @@ class StageRenderer {
     ProjectBank? projectBank, {
     ScratchTarget? target,
   }) {
-    final screenX = x + STAGE_CENTER_X;
-    final screenY = -y + STAGE_CENTER_Y;
+    final screenX = x + stageCenterX;
+    final screenY = -y + stageCenterY;
 
     Widget? content;
 
@@ -226,25 +227,24 @@ class StageRenderer {
       content = _buildCostume(costume);
     }
 
-    if (content == null) {
-      content = Container(
-        width: 50 * scale[0].abs(),
-        height: 50 * scale[1].abs(),
-        color: Colors.blue,
-      );
-    }
+    content ??= Container(
+      width: 50 * scale[0].abs(),
+      height: 50 * scale[1].abs(),
+      color: Colors.blue,
+    );
 
     return Positioned(
-      left: screenX - (content!.key != null ? 0 : 25 * scale[0].abs()),
+      left: screenX - (content.key != null ? 0 : 25 * scale[0].abs()),
       top: screenY - (content.key != null ? 0 : 25 * scale[1].abs()),
       child: Transform(
         transform: Matrix4.identity()
-          ..translate(
+          ..translateByDouble(
             (content.key != null ? 0 : 25 * scale[0].abs()),
             (content.key != null ? 0 : 25 * scale[1].abs()),
+            0,
           )
           ..rotateZ(math.pi - direction * math.pi / 180)
-          ..scale(scale[0], scale[1]),
+          ..scaleByVector3(Vector3(scale[0], scale[1], 1)),
         origin: Offset(
           content.key != null ? 0 : 25 * scale[0].abs(),
           content.key != null ? 0 : 25 * scale[1].abs(),
@@ -382,25 +382,25 @@ extension RenderedTarget on ScratchTarget {
 
   void goToFront(StageRenderer renderer) {
     if (drawableId != null) {
-      renderer.setDrawableOrder(drawableId!, double.infinity, StageLayering.SPRITE_LAYER);
+      renderer.setDrawableOrder(drawableId!, double.infinity, StageLayering.spriteLayer);
     }
   }
 
   void goToBack(StageRenderer renderer) {
     if (drawableId != null) {
-      renderer.setDrawableOrder(drawableId!, double.negativeInfinity, StageLayering.SPRITE_LAYER, false);
+      renderer.setDrawableOrder(drawableId!, double.negativeInfinity, StageLayering.spriteLayer, false);
     }
   }
 
   void goForwardLayers(StageRenderer renderer, int nLayers) {
     if (drawableId != null) {
-      renderer.setDrawableOrder(drawableId!, nLayers.toDouble(), StageLayering.SPRITE_LAYER, true);
+      renderer.setDrawableOrder(drawableId!, nLayers.toDouble(), StageLayering.spriteLayer, true);
     }
   }
 
   void goBackwardLayers(StageRenderer renderer, int nLayers) {
     if (drawableId != null) {
-      renderer.setDrawableOrder(drawableId!, -nLayers.toDouble(), StageLayering.SPRITE_LAYER, true);
+      renderer.setDrawableOrder(drawableId!, -nLayers.toDouble(), StageLayering.spriteLayer, true);
     }
   }
 }

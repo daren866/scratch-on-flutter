@@ -1801,49 +1801,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCostumeWidget(
-    ScratchCostume costume, {
-    BoxFit fit = BoxFit.contain,
-    double direction = 90,
-    String rotationStyle = 'all around',
-  }) {
-    if (costume.data.isEmpty) {
-      return Container(
-        width: 50,
-        height: 50,
-        color: Colors.grey[300],
-        child: const Icon(Icons.broken_image, size: 24),
-      );
-    }
-
-    Widget imageWidget;
-    if (costume.dataFormat == 'svg') {
-      imageWidget = SvgPicture.memory(
-        costume.data,
-        fit: fit,
-      );
-    } else {
-      imageWidget = Image.memory(
-        costume.data,
-        fit: fit,
-      );
-    }
-
-    if (rotationStyle == 'all around') {
-      final rotation = (direction - 90) * math.pi / 180;
-      return Transform.rotate(
-        angle: rotation,
-        child: imageWidget,
-      );
-    } else if (rotationStyle == 'left-right') {
-      if (direction < 0 || direction > 180) {
-        return Transform.flip(
-          flipX: true,
-          child: imageWidget,
-        );
-      }
-    }
-
-    return imageWidget;
   }
-}
