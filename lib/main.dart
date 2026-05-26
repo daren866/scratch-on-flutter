@@ -158,15 +158,13 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
-  final Map<String, AudioPlayer> _activePlayers = {};
-  final AudioPlayer _soundPlayer = AudioPlayer();
+  final List<AudioPlayer> _activePlayers = [];
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
-    _soundPlayer.stop();
-    for (final player in _activePlayers.values) {
+    for (final player in _activePlayers) {
       player.stop();
     }
     _activePlayers.clear();
@@ -900,8 +898,17 @@ class BlockExecutor {
       try {
         final audioSource = _createAudioSource(sound);
         if (audioSource != null) {
-          await _soundPlayer.setAudioSource(audioSource);
-          await _soundPlayer.play();
+          final player = AudioPlayer();
+          _activePlayers.add(player);
+          await player.setAudioSource(audioSource);
+          await player.setVolume(target.volume / 100);
+          await player.play();
+          player.playerStateStream.listen((state) {
+            if (!state.playing) {
+              player.dispose();
+              _activePlayers.remove(player);
+            }
+          });
         }
       } catch (e) {
         debugPrint('播放声音失败: $e');
@@ -935,12 +942,18 @@ class BlockExecutor {
       try {
         final audioSource = _createAudioSource(sound);
         if (audioSource != null) {
-          await _soundPlayer.setAudioSource(audioSource);
-          await _soundPlayer.play();
+          final player = AudioPlayer();
+          _activePlayers.add(player);
+          await player.setAudioSource(audioSource);
+          await player.setVolume(target.volume / 100);
+          await player.play();
 
-          while (_soundPlayer.playing && isRunning) {
+          while (player.playing && isRunning) {
             await Future.delayed(const Duration(milliseconds: 50));
           }
+
+          player.dispose();
+          _activePlayers.remove(player);
         }
       } catch (e) {
         debugPrint('播放声音失败: $e');
@@ -961,7 +974,10 @@ class BlockExecutor {
 
   Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
     debugPrint('停止所有声音');
-    _soundPlayer.stop();
+    for (final player in _activePlayers) {
+      player.stop();
+    }
+    _activePlayers.clear();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -970,7 +986,9 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
     target.volume = (volume.clamp(0, 100)).toDouble();
-    _soundPlayer.setVolume(target.volume / 100);
+    for (final player in _activePlayers) {
+      player.setVolume(target.volume / 100);
+    }
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -979,7 +997,9 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
     target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
-    _soundPlayer.setVolume(target.volume / 100);
+    for (final player in _activePlayers) {
+      player.setVolume(target.volume / 100);
+    }
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
