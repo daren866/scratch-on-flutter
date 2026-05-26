@@ -1886,15 +1886,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+// ignore: experimental_member_use
 class _WavAudioSource extends StreamAudioSource {
   final Uint8List _data;
 
   _WavAudioSource(this._data);
 
   @override
+  // ignore: experimental_member_use
   Future<StreamAudioResponse> request([int? start, int? end]) async {
     start ??= 0;
     end ??= _data.length;
+    // ignore: experimental_member_use
     return StreamAudioResponse(
       sourceLength: _data.length,
       contentLength: end - start,
@@ -1905,15 +1908,18 @@ class _WavAudioSource extends StreamAudioSource {
   }
 }
 
+// ignore: experimental_member_use
 class _Mp3AudioSource extends StreamAudioSource {
   final Uint8List _data;
 
   _Mp3AudioSource(this._data);
 
   @override
+  // ignore: experimental_member_use
   Future<StreamAudioResponse> request([int? start, int? end]) async {
     start ??= 0;
     end ??= _data.length;
+    // ignore: experimental_member_use
     return StreamAudioResponse(
       sourceLength: _data.length,
       contentLength: end - start,
