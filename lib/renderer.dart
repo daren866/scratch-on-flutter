@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:vector_math/vector_math_64.dart';
+import 'package:vector_math/vector_math_64.dart' as vector_math;
 import 'main.dart';
 
 class StageLayering {
@@ -165,7 +165,7 @@ class StageRenderer {
       }
     }
 
-    if (layerGroup == StageLayering.BACKGROUND_LAYER && projectBank != null) {
+    if (layerGroup == StageLayering.backgroundLayer && projectBank != null) {
       final stage = projectBank.targets.firstWhere((t) => t.isStage, orElse: () => ScratchTarget.empty());
       final backgroundWidget = _buildBackground(stage);
       if (backgroundWidget != null) {
@@ -242,9 +242,10 @@ class StageRenderer {
             (content.key != null ? 0 : 25 * scale[0].abs()),
             (content.key != null ? 0 : 25 * scale[1].abs()),
             0,
+            1,
           )
           ..rotateZ(math.pi - direction * math.pi / 180)
-          ..scaleByVector3(Vector3(scale[0], scale[1], 1)),
+          ..scaleByVector3(vector_math.Vector3(scale[0], scale[1], 1)),
         origin: Offset(
           content.key != null ? 0 : 25 * scale[0].abs(),
           content.key != null ? 0 : 25 * scale[1].abs(),
