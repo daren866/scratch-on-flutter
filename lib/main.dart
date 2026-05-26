@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 import 'dart:convert';
 
 void main() {
@@ -158,16 +158,14 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
-  final List<AudioPlayer> _activePlayers = [];
+  final Map<String, int> _soundHandles = {};
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
-    for (final player in _activePlayers) {
-      player.stop();
-    }
-    _activePlayers.clear();
+    SoLoud().stopAll();
+    _soundHandles.clear();
   }
 
   void _notifyFrameUpdate() {
@@ -896,19 +894,11 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final audioSource = _createAudioSource(sound);
-        if (audioSource != null) {
-          final player = AudioPlayer();
-          _activePlayers.add(player);
-          await player.setAudioSource(audioSource);
-          await player.setVolume(target.volume / 100);
-          await player.play();
-          player.playerStateStream.listen((state) {
-            if (!state.playing) {
-              player.dispose();
-              _activePlayers.remove(player);
-            }
-          });
+        final handle = await _loadSound(sound);
+        if (handle != 0) {
+          _soundHandles[soundName] = handle;
+          await SoLoud().play(handle);
+          SoLoud().setVolume(handle, target.volume / 100);
         }
       } catch (e) {
         debugPrint('播放声音失败: $e');
@@ -940,20 +930,15 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final audioSource = _createAudioSource(sound);
-        if (audioSource != null) {
-          final player = AudioPlayer();
-          _activePlayers.add(player);
-          await player.setAudioSource(audioSource);
-          await player.setVolume(target.volume / 100);
-          await player.play();
+        final handle = await _loadSound(sound);
+        if (handle != 0) {
+          _soundHandles[soundName] = handle;
+          await SoLoud().play(handle);
+          SoLoud().setVolume(handle, target.volume / 100);
 
-          while (player.playing && isRunning) {
+          while (SoLoud().isPlaying(handle) && isRunning) {
             await Future.delayed(const Duration(milliseconds: 50));
           }
-
-          player.dispose();
-          _activePlayers.remove(player);
         }
       } catch (e) {
         debugPrint('播放声音失败: $e');
@@ -963,25 +948,23 @@ class BlockExecutor {
     }
   }
 
-  AudioSource? _createAudioSource(ScratchSound sound) {
-    if (sound.dataFormat == 'wav') {
-      return AudioSource.bytes(sound.data, contentType: 'audio/wav');
-    } else if (sound.dataFormat == 'mp3') {
-      return AudioSource.bytes(sound.data, contentType: 'audio/mpeg');
-    } else if (sound.dataFormat == 'aiff') {
-      return AudioSource.bytes(sound.data, contentType: 'audio/aiff');
-    } else if (sound.dataFormat == 'flac') {
-      return AudioSource.bytes(sound.data, contentType: 'audio/flac');
+  Future<int> _loadSound(ScratchSound sound) async {
+    try {
+      if (sound.dataFormat == 'wav') {
+        return await SoLoud().loadWav(sound.data);
+      } else if (sound.dataFormat == 'mp3') {
+        return await SoLoud().loadMp3(sound.data);
+      }
+    } catch (e) {
+      debugPrint('加载声音失败: $e');
     }
-    return null;
+    return 0;
   }
 
   Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
     debugPrint('停止所有声音');
-    for (final player in _activePlayers) {
-      player.stop();
-    }
-    _activePlayers.clear();
+    SoLoud().stopAll();
+    _soundHandles.clear();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -990,8 +973,8 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
     target.volume = (volume.clamp(0, 100)).toDouble();
-    for (final player in _activePlayers) {
-      player.setVolume(target.volume / 100);
+    for (final handle in _soundHandles.values) {
+      SoLoud().setVolume(handle, target.volume / 100);
     }
     await Future.delayed(const Duration(milliseconds: 50));
   }
@@ -1001,8 +984,8 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
     target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
-    for (final player in _activePlayers) {
-      player.setVolume(target.volume / 100);
+    for (final handle in _soundHandles.values) {
+      SoLoud().setVolume(handle, target.volume / 100);
     }
     await Future.delayed(const Duration(milliseconds: 50));
   }
@@ -1290,6 +1273,27 @@ class _MyHomePageState extends State<MyHomePage> {
   ProjectBank? _projectBank;
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
+
+  @override
+  void initState() {
+    super.initState();
+    _initSoLoud();
+  }
+
+  Future<void> _initSoLoud() async {
+    try {
+      await SoLoud().init();
+      debugPrint('SoLoud initialized successfully');
+    } catch (e) {
+      debugPrint('Failed to initialize SoLoud: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    SoLoud().release();
+    super.dispose();
+  }
 
   Future<void> _pickFile() async {
     try {
