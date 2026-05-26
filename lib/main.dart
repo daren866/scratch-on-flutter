@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
-import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
-import 'renderer.dart';
+import 'block.dart';
 
 void main() {
   runApp(const MyApp());
@@ -92,10 +92,6 @@ class ScratchTarget {
   int layerOrder;
   double volume;
   String rotationStyle;
-  
-  String? drawableId;
-  Map<String, double> effects;
-  bool isOriginal;
 
   ScratchTarget({
     required this.name,
@@ -115,34 +111,12 @@ class ScratchTarget {
     this.layerOrder = 0,
     this.volume = 100,
     this.rotationStyle = 'all around',
-    this.drawableId,
-    Map<String, double>? effects,
-    this.isOriginal = true,
   })  : variables = variables ?? {},
         lists = lists ?? {},
         broadcasts = broadcasts ?? {},
         blocks = blocks ?? {},
         costumes = costumes ?? [],
-        sounds = sounds ?? [],
-        effects = effects ?? {};
-
-  factory ScratchTarget.empty() {
-    return ScratchTarget(
-      name: '',
-      isStage: false,
-      isVisible: true,
-      x: 0,
-      y: 0,
-      direction: 90,
-      size: 100,
-      currentCostume: 0,
-      layerOrder: 0,
-      volume: 100,
-      rotationStyle: 'all around',
-      effects: {},
-      isOriginal: true,
-    );
-  }
+        sounds = sounds ?? [];
 
   void setXY(double newX, double newY) {
     x = newX;
@@ -1294,7 +1268,6 @@ class _MyHomePageState extends State<MyHomePage> {
   ProjectBank? _projectBank;
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
-  final StageRenderer _stageRenderer = StageRenderer();
 
   Future<void> _pickFile() async {
     try {
@@ -1788,16 +1761,129 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildStageWidget() {
+    final targets = _projectBank!.targets;
+
+    final stage = targets.firstWhere(
+      (t) => t.isStage,
+      orElse: () => targets.first,
+    );
+
+    final sprites = targets.where((t) => !t.isStage).toList()
+      ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
+
     return Container(
       width: 480,
       height: 320,
       color: Colors.white,
-      child: Transform.scale(
-        scaleY: 320 / 360,
-        alignment: Alignment.topCenter,
-        child: _stageRenderer.buildStage(_projectBank),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
+            _buildCostumeWidget(
+              stage.costumes[stage.currentCostume],
+              fit: BoxFit.cover,
+            )
+          else
+            Container(
+              color: Colors.lightBlue[100],
+              child: const Center(
+                child: Text('舞台背景'),
+              ),
+            ),
+          ...sprites.map((sprite) {
+            if (!sprite.isVisible || sprite.costumes.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final costume = sprite.costumes[sprite.currentCostume];
+            if (costume.data.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
+            final scratchStageWidth = 480.0;
+            final scratchStageHeight = 360.0;
+            final renderWidth = 480.0;
+            final renderHeight = 320.0;
+
+            final scaleX = renderWidth / scratchStageWidth;
+            final scaleY = renderHeight / scratchStageHeight;
+
+            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
+            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
+
+            final scaledSize = sprite.size / 100 / costume.bitmapResolution;
+            final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
+            final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
+
+            Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
+
+            if (sprite.rotationStyle == 'left-right' &&
+                (sprite.direction < 0 || sprite.direction > 180)) {
+              child = Transform.flip(flipX: true, child: child);
+            } else if (sprite.rotationStyle == 'all around') {
+              child = Transform.rotate(
+                angle: (sprite.direction - 90) * math.pi / 180,
+                child: child,
+              );
+            }
+
+            return Positioned(
+              left: screenX - scaledRotationCenterX,
+              top: screenY - scaledRotationCenterY,
+              child: Transform.scale(
+                scale: scaledSize,
+                child: child,
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
 
+  Widget _buildCostumeWidget(
+    ScratchCostume costume, {
+    BoxFit fit = BoxFit.contain,
+    double direction = 90,
+    String rotationStyle = 'all around',
+  }) {
+    if (costume.data.isEmpty) {
+      return Container(
+        width: 50,
+        height: 50,
+        color: Colors.grey[300],
+        child: const Icon(Icons.broken_image, size: 24),
+      );
+    }
+
+    Widget imageWidget;
+    if (costume.dataFormat == 'svg') {
+      imageWidget = SvgPicture.memory(
+        costume.data,
+        fit: fit,
+      );
+    } else {
+      imageWidget = Image.memory(
+        costume.data,
+        fit: fit,
+      );
+    }
+
+    if (rotationStyle == 'all around') {
+      final rotation = (direction - 90) * math.pi / 180;
+      return Transform.rotate(
+        angle: rotation,
+        child: imageWidget,
+      );
+    } else if (rotationStyle == 'left-right') {
+      if (direction < 0 || direction > 180) {
+        return Transform.flip(
+          flipX: true,
+          child: imageWidget,
+        );
+      }
+    }
+
+    return imageWidget;
   }
+}
