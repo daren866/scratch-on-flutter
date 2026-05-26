@@ -965,9 +965,13 @@ class BlockExecutor {
 
   AudioSource? _createAudioSource(ScratchSound sound) {
     if (sound.dataFormat == 'wav') {
-      return _WavAudioSource(sound.data);
+      return AudioSource.bytes(sound.data, contentType: 'audio/wav');
     } else if (sound.dataFormat == 'mp3') {
-      return _Mp3AudioSource(sound.data);
+      return AudioSource.bytes(sound.data, contentType: 'audio/mpeg');
+    } else if (sound.dataFormat == 'aiff') {
+      return AudioSource.bytes(sound.data, contentType: 'audio/aiff');
+    } else if (sound.dataFormat == 'flac') {
+      return AudioSource.bytes(sound.data, contentType: 'audio/flac');
     }
     return null;
   }
@@ -1903,49 +1907,5 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     return imageWidget;
-  }
-}
-
-// ignore: experimental_member_use
-class _WavAudioSource extends StreamAudioSource {
-  final Uint8List _data;
-
-  _WavAudioSource(this._data);
-
-  @override
-  // ignore: experimental_member_use
-  Future<StreamAudioResponse> request([int? start, int? end]) async {
-    start ??= 0;
-    end ??= _data.length;
-    // ignore: experimental_member_use
-    return StreamAudioResponse(
-      sourceLength: _data.length,
-      contentLength: end - start,
-      offset: start,
-      stream: Stream.value(_data.sublist(start, end)),
-      contentType: 'audio/wav',
-    );
-  }
-}
-
-// ignore: experimental_member_use
-class _Mp3AudioSource extends StreamAudioSource {
-  final Uint8List _data;
-
-  _Mp3AudioSource(this._data);
-
-  @override
-  // ignore: experimental_member_use
-  Future<StreamAudioResponse> request([int? start, int? end]) async {
-    start ??= 0;
-    end ??= _data.length;
-    // ignore: experimental_member_use
-    return StreamAudioResponse(
-      sourceLength: _data.length,
-      contentLength: end - start,
-      offset: start,
-      stream: Stream.value(_data.sublist(start, end)),
-      contentType: 'audio/mpeg',
-    );
   }
 }
