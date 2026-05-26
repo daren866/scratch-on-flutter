@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
+import 'package:just_audio/just_audio.dart';
 import 'dart:convert';
 
 void main() {
@@ -157,11 +158,18 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
+  final Map<String, AudioPlayer> _activePlayers = {};
+  final AudioPlayer _soundPlayer = AudioPlayer();
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
+    _soundPlayer.stop();
+    for (final player in _activePlayers.values) {
+      player.stop();
+    }
+    _activePlayers.clear();
   }
 
   void _notifyFrameUpdate() {
@@ -872,7 +880,34 @@ class BlockExecutor {
     final fields = block['fields'] as Map? ?? {};
     final soundData = fields['SOUND_MENU'] as List?;
     final soundName = soundData != null && soundData.isNotEmpty ? _castToString(soundData[0]) : '';
+
     debugPrint('播放声音: $soundName');
+
+    final sound = target.sounds.firstWhere(
+      (s) => s.name == soundName,
+      orElse: () => ScratchSound(
+        name: '',
+        md5ext: '',
+        dataFormat: '',
+        data: Uint8List(0),
+        format: '',
+        rate: 0,
+        sampleCount: 0,
+      ),
+    );
+
+    if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
+      try {
+        final audioSource = _createAudioSource(sound);
+        if (audioSource != null) {
+          await _soundPlayer.setAudioSource(audioSource);
+          await _soundPlayer.play();
+        }
+      } catch (e) {
+        debugPrint('播放声音失败: $e');
+      }
+    }
+
     await Future.delayed(const Duration(milliseconds: 100));
   }
 
@@ -880,12 +915,53 @@ class BlockExecutor {
     final fields = block['fields'] as Map? ?? {};
     final soundData = fields['SOUND_MENU'] as List?;
     final soundName = soundData != null && soundData.isNotEmpty ? _castToString(soundData[0]) : '';
+
     debugPrint('播放声音直到完成: $soundName');
-    await Future.delayed(const Duration(milliseconds: 500));
+
+    final sound = target.sounds.firstWhere(
+      (s) => s.name == soundName,
+      orElse: () => ScratchSound(
+        name: '',
+        md5ext: '',
+        dataFormat: '',
+        data: Uint8List(0),
+        format: '',
+        rate: 0,
+        sampleCount: 0,
+      ),
+    );
+
+    if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
+      try {
+        final audioSource = _createAudioSource(sound);
+        if (audioSource != null) {
+          await _soundPlayer.setAudioSource(audioSource);
+          await _soundPlayer.play();
+
+          while (_soundPlayer.playing && isRunning) {
+            await Future.delayed(const Duration(milliseconds: 50));
+          }
+        }
+      } catch (e) {
+        debugPrint('播放声音失败: $e');
+      }
+    } else {
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
+  AudioSource? _createAudioSource(ScratchSound sound) {
+    if (sound.dataFormat == 'wav') {
+      return _WavAudioSource(sound.data);
+    } else if (sound.dataFormat == 'mp3') {
+      return _Mp3AudioSource(sound.data);
+    }
+    return null;
   }
 
   Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
     debugPrint('停止所有声音');
+    _soundPlayer.stop();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -894,6 +970,7 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 100;
     target.volume = (volume.clamp(0, 100)).toDouble();
+    _soundPlayer.setVolume(target.volume / 100);
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -902,6 +979,7 @@ class BlockExecutor {
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
     target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
+    _soundPlayer.setVolume(target.volume / 100);
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -1805,5 +1883,43 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     return imageWidget;
+  }
+}
+
+class _WavAudioSource extends StreamAudioSource {
+  final Uint8List _data;
+
+  _WavAudioSource(this._data);
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    start ??= 0;
+    end ??= _data.length;
+    return StreamAudioResponse(
+      sourceLength: _data.length,
+      contentLength: end - start,
+      offset: start,
+      stream: Stream.value(_data.sublist(start, end)),
+      contentType: 'audio/wav',
+    );
+  }
+}
+
+class _Mp3AudioSource extends StreamAudioSource {
+  final Uint8List _data;
+
+  _Mp3AudioSource(this._data);
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    start ??= 0;
+    end ??= _data.length;
+    return StreamAudioResponse(
+      sourceLength: _data.length,
+      contentLength: end - start,
+      offset: start,
+      stream: Stream.value(_data.sublist(start, end)),
+      contentType: 'audio/mpeg',
+    );
   }
 }
