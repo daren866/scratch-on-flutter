@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 import 'dart:convert';
 
@@ -158,11 +159,17 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final List<AudioPlayer> _activePlayers = [];
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
+    for (final player in _activePlayers) {
+      player.stop();
+    }
+    _activePlayers.clear();
   }
 
   void _notifyFrameUpdate() {
@@ -891,7 +898,19 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        debugPrint('准备播放声音: ${sound.name}, 格式: ${sound.dataFormat}, 长度: ${sound.data.length}');
+        final player = AudioPlayer();
+        _activePlayers.add(player);
+        final source = AudioSource.bytes(sound.data);
+        await player.setSource(source);
+        await player.setVolume(target.volume / 100);
+        await player.play();
+        
+        player.onPlayerComplete.listen((_) {
+          player.dispose();
+          _activePlayers.remove(player);
+        });
+        
+        debugPrint('播放声音: ${sound.name}, 格式: ${sound.dataFormat}');
       } catch (e) {
         debugPrint('播放声音失败: $e');
       }
@@ -922,8 +941,18 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        debugPrint('准备播放声音直到完成: ${sound.name}, 格式: ${sound.dataFormat}, 长度: ${sound.data.length}');
-        await Future.delayed(const Duration(milliseconds: 500));
+        final player = AudioPlayer();
+        _activePlayers.add(player);
+        final source = AudioSource.bytes(sound.data);
+        await player.setSource(source);
+        await player.setVolume(target.volume / 100);
+        await player.play();
+        
+        await player.onPlayerComplete.first;
+        player.dispose();
+        _activePlayers.remove(player);
+        
+        debugPrint('播放声音完成: ${sound.name}');
       } catch (e) {
         debugPrint('播放声音失败: $e');
       }
@@ -934,6 +963,11 @@ class BlockExecutor {
 
   Future<void> _executeSoundStopAllSounds(ScratchTarget target, Map<String, dynamic> block) async {
     debugPrint('停止所有声音');
+    for (final player in _activePlayers) {
+      player.stop();
+      player.dispose();
+    }
+    _activePlayers.clear();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
