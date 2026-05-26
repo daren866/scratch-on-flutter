@@ -1268,6 +1268,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ProjectBank? _projectBank;
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
+  final StageRenderer _stageRenderer = StageRenderer();
 
   Future<void> _pickFile() async {
     try {
@@ -1761,82 +1762,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildStageWidget() {
-    final targets = _projectBank!.targets;
-
-    final stage = targets.firstWhere(
-      (t) => t.isStage,
-      orElse: () => targets.first,
-    );
-
-    final sprites = targets.where((t) => !t.isStage).toList()
-      ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
-
     return Container(
       width: 480,
       height: 320,
       color: Colors.white,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
-            _buildCostumeWidget(
-              stage.costumes[stage.currentCostume],
-              fit: BoxFit.cover,
-            )
-          else
-            Container(
-              color: Colors.lightBlue[100],
-              child: const Center(
-                child: Text('舞台背景'),
-              ),
-            ),
-          ...sprites.map((sprite) {
-            if (!sprite.isVisible || sprite.costumes.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            final costume = sprite.costumes[sprite.currentCostume];
-            if (costume.data.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            final scratchStageWidth = 480.0;
-            final scratchStageHeight = 360.0;
-            final renderWidth = 480.0;
-            final renderHeight = 320.0;
-
-            final scaleX = renderWidth / scratchStageWidth;
-            final scaleY = renderHeight / scratchStageHeight;
-
-            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
-            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
-
-            final scaledSize = sprite.size / 100 / costume.bitmapResolution;
-            final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
-            final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
-
-            Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
-
-            if (sprite.rotationStyle == 'left-right' &&
-                (sprite.direction < 0 || sprite.direction > 180)) {
-              child = Transform.flip(flipX: true, child: child);
-            } else if (sprite.rotationStyle == 'all around') {
-              child = Transform.rotate(
-                angle: (sprite.direction - 90) * math.pi / 180,
-                child: child,
-              );
-            }
-
-            return Positioned(
-              left: screenX - scaledRotationCenterX,
-              top: screenY - scaledRotationCenterY,
-              child: Transform.scale(
-                scale: scaledSize,
-                child: child,
-              ),
-            );
-          }),
-        ],
+      child: Transform.scale(
+        scaleY: 320 / 360,
+        alignment: Alignment.topCenter,
+        child: _stageRenderer.buildStage(_projectBank),
       ),
     );
   }
