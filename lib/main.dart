@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:audioplayers/src/audio_source.dart';
+import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
 
@@ -160,14 +159,19 @@ class BlockExecutor {
   final ProjectBank projectBank;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
-  final List<AudioPlayer> _activePlayers = [];
+  final List<audioplayers.AudioPlayer> _activePlayers = [];
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
     for (final player in _activePlayers) {
-      player.stop();
+      try {
+        player.stop();
+        player.dispose();
+      } catch (e) {
+        debugPrint('停止播放器失败: $e');
+      }
     }
     _activePlayers.clear();
   }
@@ -898,11 +902,9 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final player = AudioPlayer();
+        final player = audioplayers.AudioPlayer();
         _activePlayers.add(player);
-        final source = AudioSource.bytes(sound.data);
-        await player.setVolume(target.volume / 100);
-        await player.play(source);
+        await player.play(audioplayers.BytesSource(sound.data), volume: target.volume / 100);
         
         player.onPlayerComplete.listen((_) {
           player.dispose();
@@ -940,11 +942,9 @@ class BlockExecutor {
 
     if (sound.name.isNotEmpty && sound.data.isNotEmpty) {
       try {
-        final player = AudioPlayer();
+        final player = audioplayers.AudioPlayer();
         _activePlayers.add(player);
-        final source = AudioSource.bytes(sound.data);
-        await player.setVolume(target.volume / 100);
-        await player.play(source);
+        await player.play(audioplayers.BytesSource(sound.data), volume: target.volume / 100);
         
         await player.onPlayerComplete.first;
         player.dispose();
