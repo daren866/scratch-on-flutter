@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'main.dart';
 
 class StageLayering {
@@ -179,14 +180,14 @@ class StageRenderer {
   }
 
   Widget? _buildSpriteTarget(ScratchTarget target) {
-    if (!target.visible) return null;
+    if (!target.isVisible) return null;
 
     final scale = target.size / 100.0;
     double effectiveDirection = target.direction;
     double effectiveScaleX = scale;
 
     switch (target.rotationStyle) {
-      case 'don't rotate':
+      case "don't rotate":
         effectiveDirection = 90.0;
         break;
       case 'left-right':
@@ -335,8 +336,8 @@ extension RenderedTarget on ScratchTarget {
     final rendered = _getRenderedDirectionAndScale();
 
     renderer.updateDrawablePosition(drawableId!, [x, y]);
-    renderer.updateDrawableDirectionScale(drawableId!, rendered.direction, rendered.scale);
-    renderer.updateDrawableVisible(drawableId!, visible);
+    renderer.updateDrawableDirectionScale(drawableId!, rendered['direction'] as double, rendered['scale'] as List<double>);
+    renderer.updateDrawableVisible(drawableId!, isVisible);
 
     if (costumes.isNotEmpty && currentCostume < costumes.length) {
       renderer.updateDrawableSkinId(drawableId!, costumes[currentCostume].md5ext);
@@ -353,7 +354,7 @@ extension RenderedTarget on ScratchTarget {
     double finalScaleY = size / 100.0;
 
     switch (rotationStyle) {
-      case 'don't rotate':
+      case "don't rotate":
         finalDirection = 90.0;
         break;
       case 'left-right':
@@ -364,7 +365,7 @@ extension RenderedTarget on ScratchTarget {
 
     return {
       'direction': finalDirection,
-      'scale': [finalScaleX, finalScaleY],
+      'scale': <double>[finalScaleX, finalScaleY],
     };
   }
 
@@ -380,18 +381,26 @@ extension RenderedTarget on ScratchTarget {
   }
 
   void goToFront(StageRenderer renderer) {
-    renderer.setDrawableOrder(drawableId ?? '', double.infinity, StageLayering.SPRITE_LAYER);
+    if (drawableId != null) {
+      renderer.setDrawableOrder(drawableId!, double.infinity, StageLayering.SPRITE_LAYER);
+    }
   }
 
   void goToBack(StageRenderer renderer) {
-    renderer.setDrawableOrder(drawableId ?? '', double.negativeInfinity, StageLayering.SPRITE_LAYER, false);
+    if (drawableId != null) {
+      renderer.setDrawableOrder(drawableId!, double.negativeInfinity, StageLayering.SPRITE_LAYER, false);
+    }
   }
 
   void goForwardLayers(StageRenderer renderer, int nLayers) {
-    renderer.setDrawableOrder(drawableId ?? '', nLayers.toDouble(), StageLayering.SPRITE_LAYER, true);
+    if (drawableId != null) {
+      renderer.setDrawableOrder(drawableId!, nLayers.toDouble(), StageLayering.SPRITE_LAYER, true);
+    }
   }
 
   void goBackwardLayers(StageRenderer renderer, int nLayers) {
-    renderer.setDrawableOrder(drawableId ?? '', -nLayers.toDouble(), StageLayering.SPRITE_LAYER, true);
+    if (drawableId != null) {
+      renderer.setDrawableOrder(drawableId!, -nLayers.toDouble(), StageLayering.SPRITE_LAYER, true);
+    }
   }
 }

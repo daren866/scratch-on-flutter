@@ -7,6 +7,7 @@ import 'package:archive/archive.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
+import 'renderer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -92,6 +93,10 @@ class ScratchTarget {
   int layerOrder;
   double volume;
   String rotationStyle;
+  
+  String? drawableId;
+  Map<String, double> effects;
+  bool isOriginal;
 
   ScratchTarget({
     required this.name,
@@ -111,12 +116,34 @@ class ScratchTarget {
     this.layerOrder = 0,
     this.volume = 100,
     this.rotationStyle = 'all around',
+    this.drawableId,
+    Map<String, double>? effects,
+    this.isOriginal = true,
   })  : variables = variables ?? {},
         lists = lists ?? {},
         broadcasts = broadcasts ?? {},
         blocks = blocks ?? {},
         costumes = costumes ?? [],
-        sounds = sounds ?? [];
+        sounds = sounds ?? [],
+        effects = effects ?? {};
+
+  factory ScratchTarget.empty() {
+    return ScratchTarget(
+      name: '',
+      isStage: false,
+      isVisible: true,
+      x: 0,
+      y: 0,
+      direction: 90,
+      size: 100,
+      currentCostume: 0,
+      layerOrder: 0,
+      volume: 100,
+      rotationStyle: 'all around',
+      effects: {},
+      isOriginal: true,
+    );
+  }
 
   void setXY(double newX, double newY) {
     x = newX;
