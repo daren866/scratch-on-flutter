@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
@@ -195,7 +196,9 @@ class ScratchRuntime {
     final greenFlagBlocks = <MapEntry<String, ScratchTarget>>[];
 
     for (final target in projectBank.targets) {
-      for (final entry in target.blocks.entries) {
+      final blocks = target.blocks;
+      if (blocks == null) continue;
+      for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenflagclicked') {
           greenFlagBlocks.add(MapEntry(entry.key, target));
@@ -220,8 +223,8 @@ class ScratchRuntime {
       final currentBlockId = thread.peekStack();
 
       if (currentBlockId == null) {
-        final popped = thread.popStack();
-        if (popped == null) {
+        thread.popStack();
+        if (thread.stack.isEmpty) {
           thread.status = ScratchThread.STATUS_DONE;
           break;
         }
@@ -266,11 +269,16 @@ class ScratchRuntime {
       }
 
       if (thread.peekStack() == currentBlockId) {
-        final nextBlockId = thread.getNextBlock(thread.target!.blocks, currentBlockId);
-        if (nextBlockId != null) {
-          thread.pushStack(nextBlockId);
-        } else {
+        final blocks = thread.target!.blocks;
+        if (blocks == null) {
           thread.popStack();
+        } else {
+          final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
+          if (nextBlockId != null) {
+            thread.pushStack(nextBlockId);
+          } else {
+            thread.popStack();
+          }
         }
       }
 
@@ -671,7 +679,7 @@ class ScratchRuntime {
     target.say = args['MESSAGE']?.toString() ?? '';
 
     if (util.stackTimerNeedsInit()) {
-      final duration = max(0, 1000 * _toDouble(args['SECS'] ?? 1));
+      final duration = math.max(0.0, 1000 * _toDouble(args['SECS'] ?? 1));
       util.startStackTimer(duration);
       util.yield();
     } else if (!util.stackTimerFinished()) {
@@ -683,7 +691,7 @@ class ScratchRuntime {
   dynamic _looksSwitchCostumeTo(Map<String, dynamic> args, ScratchTarget target) {
     final costumeName = args['COSTUME']?.toString() ?? '';
     for (final costume in target.costumes) {
-      if (costume['name']?.toString() == costumeName) {
+      if (costume.name == costumeName) {
         target.currentCostumeIndex = target.costumes.indexOf(costume);
         break;
       }
@@ -695,7 +703,7 @@ class ScratchRuntime {
   dynamic _looksSwitchBackdropTo(Map<String, dynamic> args, ScratchTarget target) {
     final backdropName = args['BACKDROP']?.toString() ?? '';
     for (final costume in target.costumes) {
-      if (costume['name']?.toString() == backdropName) {
+      if (costume.name == backdropName) {
         target.currentCostumeIndex = target.costumes.indexOf(costume);
         break;
       }
@@ -815,7 +823,7 @@ class ScratchRuntime {
 
   dynamic _controlWait(Map<String, dynamic> args, BlockUtility util) {
     if (util.stackTimerNeedsInit()) {
-      final duration = max(0, 1000 * _toDouble(args['DURATION'] ?? 1));
+      final duration = math.max(0.0, 1000 * _toDouble(args['DURATION'] ?? 1));
       util.startStackTimer(duration);
       util.yield();
     } else if (!util.stackTimerFinished()) {
@@ -988,7 +996,9 @@ class ScratchRuntime {
   dynamic _eventBroadcast(Map<String, dynamic> args, ScratchTarget target, ScratchRuntime runtime) {
     final broadcastName = args['BROADCAST_INPUT']?.toString() ?? '';
     for (final t in runtime.projectBank.targets) {
-      for (final entry in t.blocks.entries) {
+      final blocks = t.blocks;
+      if (blocks == null) continue;
+      for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenbroadcastreceived') {
           final receivedBroadcast = block['fields']?['BROADCAST_OPTION']?[0];
