@@ -8,16 +8,16 @@ import 'dart:convert';
 import 'mouse.dart';
 
 class ScratchThread {
-  static const int STATUS_RUNNING = 0;
-  static const int STATUS_PROMISE_WAIT = 1;
-  static const int STATUS_YIELD = 2;
-  static const int STATUS_YIELD_TICK = 3;
-  static const int STATUS_DONE = 4;
+  static const int statusRunning = 0;
+  static const int statusPromiseWait = 1;
+  static const int statusYield = 2;
+  static const int statusYieldTick = 3;
+  static const int statusDone = 4;
 
   final String topBlock;
   final List<String> stack = [];
   final Map<String, dynamic> stackFrame = {};
-  int status = STATUS_RUNNING;
+  int status = statusRunning;
   ScratchTarget? target;
 
   ScratchThread(this.topBlock) {
@@ -120,11 +120,11 @@ class BlockUtility {
   }
 
   void yield() {
-    thread.status = ScratchThread.STATUS_YIELD;
+    thread.status = ScratchThread.statusYield;
   }
 
   void yieldTick() {
-    thread.status = ScratchThread.STATUS_YIELD_TICK;
+    thread.status = ScratchThread.statusYieldTick;
   }
 
   void stopAll() {
@@ -132,7 +132,7 @@ class BlockUtility {
   }
 
   void stopThisScript() {
-    thread.status = ScratchThread.STATUS_DONE;
+    thread.status = ScratchThread.statusDone;
   }
 
   bool stackTimerNeedsInit() {
@@ -227,7 +227,7 @@ class ScratchRuntime {
       if (currentBlockId == null) {
         thread.popStack();
         if (thread.stack.isEmpty) {
-          thread.status = ScratchThread.STATUS_DONE;
+          thread.status = ScratchThread.statusDone;
           break;
         }
         continue;
@@ -246,7 +246,7 @@ class ScratchRuntime {
       }
 
       final util = BlockUtility(thread.target!, thread, this);
-      final argValues = _getArgValues(thread.target!, block);
+      final argValues = _getArgValues(thread.target!, block, this);
 
       final reported = _executeBlock(opcode, argValues, util, thread.target!);
 
@@ -259,14 +259,14 @@ class ScratchRuntime {
       }
 
       if (thread.status == ScratchThread.STATUS_YIELD ||
-          thread.status == ScratchThread.STATUS_YIELD_TICK) {
-        thread.status = ScratchThread.STATUS_RUNNING;
+          thread.status == ScratchThread.statusYieldTick) {
+        thread.status = ScratchThread.statusRunning;
         await Future.delayed(const Duration(milliseconds: 33));
         onFrameUpdate?.call();
         continue;
       }
 
-      if (thread.status == ScratchThread.STATUS_DONE) {
+      if (thread.status == ScratchThread.statusDone) {
         break;
       }
 
@@ -289,7 +289,7 @@ class ScratchRuntime {
       }
 
       if (thread.stack.isEmpty) {
-        thread.status = ScratchThread.STATUS_DONE;
+        thread.status = ScratchThread.statusDone;
       }
     }
   }
@@ -299,7 +299,7 @@ class ScratchRuntime {
     return target.blocks?[blockId];
   }
 
-  Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block) {
+  Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block, ScratchRuntime runtime) {
     final args = <String, dynamic>{};
     final inputs = block['inputs'] as Map<String, dynamic>? ?? {};
     final fields = block['fields'] as Map<String, dynamic>? ?? {};
@@ -368,21 +368,21 @@ class ScratchRuntime {
     } else if (opcode == 'sensing_current') {
       return DateTime.now().second;
     } else if (opcode == 'operator_random') {
-      final from = _getArgValues(target, block)['FROM'] ?? 1;
-      final to = _getArgValues(target, block)['TO'] ?? 10;
+      final from = _getArgValues(target, block, runtime)['FROM'] ?? 1;
+      final to = _getArgValues(target, block, runtime)['TO'] ?? 10;
       final fromNum = _toDouble(from);
       final toNum = _toDouble(to);
       return (math.Random().nextDouble() * (toNum - fromNum) + fromNum).round();
     } else if (opcode == 'operator_contains') {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       final string = args['STRING']?.toString().toLowerCase() ?? '';
       final cont = args['CONTAINS']?.toString().toLowerCase() ?? '';
       return string.contains(cont);
     } else if (opcode == 'operator_join') {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       return '${args['STRING1'] ?? ''}${args['STRING2'] ?? ''}';
     } else if (opcode == 'operator_letter_of') {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       final letter = _toInt(args['LETTER'] ?? 1);
       final string = args['STRING']?.toString() ?? '';
       if (letter >= 1 && letter <= string.length) {
@@ -390,20 +390,20 @@ class ScratchRuntime {
       }
       return '';
     } else if (opcode == 'operator_length') {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       return (args['STRING']?.toString() ?? '').length;
     } else if (opcode == 'operator_mod') {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       final num1 = _toDouble(args['NUM1'] ?? 0);
       final num2 = _toDouble(args['NUM2'] ?? 1);
       return (num1 % num2).toStringAsFixed(6).replaceAll(RegExp(r'\.?0+$'), '');
     } else if (opcode == 'operator_round') {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       return _toDouble(args['NUM'] ?? 0).round();
     }
 
     if (opcode != null && opcode.startsWith('operator_')) {
-      final args = _getArgValues(target, block);
+      final args = _getArgValues(target, block, runtime);
       return _evaluateOperator(opcode, args);
     }
 
@@ -838,9 +838,7 @@ class ScratchRuntime {
   dynamic _controlRepeat(Map<String, dynamic> args, BlockUtility util) {
     final times = _toInt(args['TIMES'] ?? 10);
 
-    if (util.thread.loopCounter == null) {
-      util.thread.loopCounter = times;
-    }
+    util.thread.loopCounter ??= times;
 
     util.thread.loopCounter = (util.thread.loopCounter as int) - 1;
 

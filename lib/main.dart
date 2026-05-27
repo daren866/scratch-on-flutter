@@ -8,6 +8,7 @@ import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
 import 'mouse.dart';
+import 'block.dart';
 
 void main() {
   runApp(const MyApp());
