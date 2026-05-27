@@ -1848,9 +1848,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final allVariables = <String, dynamic>{};
     for (final target in _projectBank!.targets) {
-      if (target.variables != null) {
-        allVariables.addAll(target.variables);
-      }
+      allVariables.addAll(target.variables);
     }
 
     final rows = <TableRow>[
