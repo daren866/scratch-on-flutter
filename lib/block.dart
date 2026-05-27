@@ -347,11 +347,11 @@ class ScratchRuntime {
     } else if (opcode == 'motion_direction') {
       return target.direction;
     } else if (opcode == 'looks_costume') {
-      return target.currentCostume?.name ?? '';
+      return target.currentCostumeObj?.name ?? '';
     } else if (opcode == 'looks_size') {
       return target.size;
     } else if (opcode == 'looks_backdropname' || opcode == 'looks_backdrop') {
-      return target.currentCostume?.name ?? '';
+      return target.currentCostumeObj?.name ?? '';
     } else if (opcode == 'sensing_answer') {
       return '';
     } else if (opcode == 'sensing_mousex') {
@@ -694,7 +694,7 @@ class ScratchRuntime {
     final costumeName = args['COSTUME']?.toString() ?? '';
     for (final costume in target.costumes) {
       if (costume.name == costumeName) {
-        target.currentCostumeIndex = target.costumes.indexOf(costume);
+        target.currentCostume = target.costumes.indexOf(costume);
         break;
       }
     }
@@ -706,7 +706,7 @@ class ScratchRuntime {
     final backdropName = args['BACKDROP']?.toString() ?? '';
     for (final costume in target.costumes) {
       if (costume.name == backdropName) {
-        target.currentCostumeIndex = target.costumes.indexOf(costume);
+        target.currentCostume = target.costumes.indexOf(costume);
         break;
       }
     }
@@ -985,7 +985,7 @@ class ScratchRuntime {
     target.penStrokes.add({
       'x': target.x,
       'y': target.y,
-      'costume': target.currentCostumeIndex,
+      'costume': target.currentCostume,
       'direction': target.direction,
       'size': target.size,
     });

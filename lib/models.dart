@@ -62,8 +62,12 @@ class ScratchTarget {
   final List<ScratchCostume> costumes;
   final List<ScratchSound> sounds;
   int layerOrder;
-  double volume;
+  int volume;
   String rotationStyle;
+  String say;
+  final Map<String, double> effects;
+  final List<Map<String, dynamic>> penStrokes;
+  bool visible;
 
   ScratchTarget({
     required this.name,
@@ -83,12 +87,18 @@ class ScratchTarget {
     this.layerOrder = 0,
     this.volume = 100,
     this.rotationStyle = 'all around',
+    this.say = '',
+    Map<String, double>? effects,
+    List<Map<String, dynamic>>? penStrokes,
+    this.visible = true,
   })  : variables = variables ?? {},
         lists = lists ?? {},
         broadcasts = broadcasts ?? {},
         blocks = blocks ?? {},
         costumes = costumes ?? [],
-        sounds = sounds ?? [];
+        sounds = sounds ?? [],
+        effects = effects ?? {},
+        penStrokes = penStrokes ?? [];
 
   void setXY(double newX, double newY) {
     x = newX;
@@ -105,6 +115,13 @@ class ScratchTarget {
 
   void setY(double newY) {
     y = newY;
+  }
+
+  ScratchCostume? get currentCostumeObj {
+    if (costumes.isEmpty || currentCostume < 0 || currentCostume >= costumes.length) {
+      return null;
+    }
+    return costumes[currentCostume];
   }
 }
 
