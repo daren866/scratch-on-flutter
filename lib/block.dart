@@ -166,6 +166,7 @@ class ScratchRuntime {
   final List<ScratchThread> threads = [];
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Map<String, audioplayers.AudioPlayer> _soundHandles = {};
+  bool _isRunning = false;
 
   ScratchRuntime({
     required this.projectBank,
@@ -317,7 +318,7 @@ class ScratchRuntime {
           final subBlockId = inputData;
           final subBlock = _getBlock(target, subBlockId);
           if (subBlock != null) {
-            args[inputName] = _evaluateReporter(subBlock, target);
+            args[inputName] = _evaluateReporter(subBlock, target, runtime);
           }
         }
       }
@@ -337,7 +338,7 @@ class ScratchRuntime {
     return args;
   }
 
-  dynamic _evaluateReporter(Map<String, dynamic> block, ScratchTarget target) {
+  dynamic _evaluateReporter(Map<String, dynamic> block, ScratchTarget target, ScratchRuntime runtime) {
     final opcode = block['opcode'] as String?;
 
     if (opcode == 'motion_xposition') {

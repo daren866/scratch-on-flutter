@@ -158,11 +158,12 @@ class ProjectBank {
 
 class BlockExecutor {
   final ProjectBank projectBank;
+  final ScratchRuntime? scratchRuntime;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
 
-  BlockExecutor(this.projectBank, {this.onFrameUpdate});
+  BlockExecutor(this.projectBank, {this.scratchRuntime, this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
@@ -1478,6 +1479,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isRunning = false;
   BlockExecutor? _currentExecutor;
+  ScratchRuntime? _scratchRuntime;
 
   Future<void> _runProject() async {
     if (_projectBank == null) {
@@ -1487,8 +1489,18 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
+    _scratchRuntime = ScratchRuntime(
+      projectBank: _projectBank!,
+      onFrameUpdate: () {
+        if (mounted) {
+          setState(() {});
+        }
+      },
+    );
+
     _currentExecutor = BlockExecutor(
       _projectBank!,
+      scratchRuntime: _scratchRuntime,
       onFrameUpdate: () {
         if (mounted) {
           setState(() {});
@@ -1777,17 +1789,17 @@ class _MyHomePageState extends State<MyHomePage> {
         final renderBox = context.findRenderObject() as RenderBox?;
         if (renderBox != null) {
           final localPosition = renderBox.globalToLocal(event.position);
-          _blockExecutor?.runtime.mouse.updatePosition(
+          _scratchRuntime?.mouse.updatePosition(
             localPosition.dx.toInt(),
             localPosition.dy.toInt(),
           );
         }
       },
       onPointerDown: (event) {
-        _blockExecutor?.runtime.mouse.updateMouseDown(true);
+        _scratchRuntime?.mouse.updateMouseDown(true);
       },
       onPointerUp: (event) {
-        _blockExecutor?.runtime.mouse.updateMouseDown(false);
+        _scratchRuntime?.mouse.updateMouseDown(false);
       },
       child: Container(
         width: 480,
