@@ -7,6 +7,7 @@ import 'package:archive/archive.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
+import 'mouse.dart';
 
 void main() {
   runApp(const MyApp());
@@ -1477,8 +1478,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isRunning = false;
   BlockExecutor? _currentExecutor;
-  final double _mouseX = 0;
-  final double _mouseY = 0;
 
   Future<void> _runProject() async {
     if (_projectBank == null) {
@@ -1582,38 +1581,6 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                   ),
                                 ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            const Text(
-                              '当前变量',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                            const SizedBox(width: 60),
-                            const Text(
-                              '当前信息',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildVariablesTable(),
-                            ),
-                            const SizedBox(width: 24),
-                            Expanded(
-                              child: _buildInfoTable(),
-                            ),
-                          ],
                         ),
                       ],
                     ),
@@ -1794,187 +1761,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildVariablesTable() {
-    if (_projectBank == null) {
-      return Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black38),
-        ),
-        child: Table(
-          border: TableBorder.all(color: Colors.black38),
-          children: const [
-            TableRow(
-              children: [
-                TableCell(
-                  child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text(
-                      '变量',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                TableCell(
-                  child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text(
-                      '值',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            TableRow(
-              children: [
-                TableCell(
-                  child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text('我的变量'),
-                  ),
-                ),
-                TableCell(
-                  child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text('0'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
-
-    final allVariables = <String, dynamic>{};
-    for (final target in _projectBank!.targets) {
-      allVariables.addAll(target.variables);
-    }
-
-    final rows = <TableRow>[
-      const TableRow(
-        children: [
-          TableCell(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                '变量',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          TableCell(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                '值',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ];
-
-    for (final entry in allVariables.entries) {
-      rows.add(TableRow(
-        children: [
-          TableCell(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(entry.key),
-            ),
-          ),
-          TableCell(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(entry.value.toString()),
-            ),
-          ),
-        ],
-      ));
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black38),
-      ),
-      child: Table(
-        border: TableBorder.all(color: Colors.black38),
-        children: rows,
-      ),
-    );
-  }
-
-  Widget _buildInfoTable() {
-    final rows = <TableRow>[
-      const TableRow(
-        children: [
-          TableCell(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                '变量',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          TableCell(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text(
-                '值',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
-      TableRow(
-        children: [
-          const TableCell(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text('鼠标x'),
-            ),
-          ),
-          TableCell(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(_mouseX.toString()),
-            ),
-          ),
-        ],
-      ),
-      TableRow(
-        children: [
-          const TableCell(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: Text('鼠标y'),
-            ),
-          ),
-          TableCell(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Text(_mouseY.toString()),
-            ),
-          ),
-        ],
-      ),
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black38),
-      ),
-      child: Table(
-        border: TableBorder.all(color: Colors.black38),
-        children: rows,
-      ),
-    );
-  }
-
   Widget _buildStageWidget() {
     final targets = _projectBank!.targets;
 
@@ -1986,72 +1772,90 @@ class _MyHomePageState extends State<MyHomePage> {
     final sprites = targets.where((t) => !t.isStage).toList()
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
-    return Container(
-      width: 480,
-      height: 320,
-      color: Colors.white,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
-            _buildCostumeWidget(
-              stage.costumes[stage.currentCostume],
-              fit: BoxFit.cover,
-            )
-          else
-            Container(
-              color: Colors.lightBlue[100],
-              child: const Center(
-                child: Text('舞台背景'),
+    return Listener(
+      onPointerMove: (event) {
+        final renderBox = context.findRenderObject() as RenderBox?;
+        if (renderBox != null) {
+          final localPosition = renderBox.globalToLocal(event.position);
+          _blockExecutor?.runtime.mouse.updatePosition(
+            localPosition.dx.toInt(),
+            localPosition.dy.toInt(),
+          );
+        }
+      },
+      onPointerDown: (event) {
+        _blockExecutor?.runtime.mouse.updateMouseDown(true);
+      },
+      onPointerUp: (event) {
+        _blockExecutor?.runtime.mouse.updateMouseDown(false);
+      },
+      child: Container(
+        width: 480,
+        height: 320,
+        color: Colors.white,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
+              _buildCostumeWidget(
+                stage.costumes[stage.currentCostume],
+                fit: BoxFit.cover,
+              )
+            else
+              Container(
+                color: Colors.lightBlue[100],
+                child: const Center(
+                  child: Text('舞台背景'),
+                ),
               ),
-            ),
-          ...sprites.map((sprite) {
-            if (!sprite.isVisible || sprite.costumes.isEmpty) {
-              return const SizedBox.shrink();
-            }
+            ...sprites.map((sprite) {
+              if (!sprite.isVisible || sprite.costumes.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
-            final costume = sprite.costumes[sprite.currentCostume];
-            if (costume.data.isEmpty) {
-              return const SizedBox.shrink();
-            }
+              final costume = sprite.costumes[sprite.currentCostume];
+              if (costume.data.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
-            final scratchStageWidth = 480.0;
-            final scratchStageHeight = 360.0;
-            final renderWidth = 480.0;
-            final renderHeight = 320.0;
+              final scratchStageWidth = 480.0;
+              final scratchStageHeight = 360.0;
+              final renderWidth = 480.0;
+              final renderHeight = 320.0;
 
-            final scaleX = renderWidth / scratchStageWidth;
-            final scaleY = renderHeight / scratchStageHeight;
+              final scaleX = renderWidth / scratchStageWidth;
+              final scaleY = renderHeight / scratchStageHeight;
 
-            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
-            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
+              final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
+              final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
 
-            final scaledSize = sprite.size / 100 / costume.bitmapResolution;
-            final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
-            final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
+              final scaledSize = sprite.size / 100 / costume.bitmapResolution;
+              final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
+              final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
 
-            Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
+              Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
 
-            if (sprite.rotationStyle == 'left-right' &&
-                (sprite.direction < 0 || sprite.direction > 180)) {
-              child = Transform.flip(flipX: true, child: child);
-            } else if (sprite.rotationStyle == 'all around') {
-              child = Transform.rotate(
-                angle: (sprite.direction - 90) * math.pi / 180,
-                child: child,
+              if (sprite.rotationStyle == 'left-right' &&
+                  (sprite.direction < 0 || sprite.direction > 180)) {
+                child = Transform.flip(flipX: true, child: child);
+              } else if (sprite.rotationStyle == 'all around') {
+                child = Transform.rotate(
+                  angle: (sprite.direction - 90) * math.pi / 180,
+                  child: child,
+                );
+              }
+
+              return Positioned(
+                left: screenX - scaledRotationCenterX,
+                top: screenY - scaledRotationCenterY,
+                child: Transform.scale(
+                  scale: scaledSize,
+                  child: child,
+                ),
               );
-            }
-
-            return Positioned(
-              left: screenX - scaledRotationCenterX,
-              top: screenY - scaledRotationCenterY,
-              child: Transform.scale(
-                scale: scaledSize,
-                child: child,
-              ),
-            );
-          }),
-        ],
+            }),
+          ],
+        ),
       ),
     );
   }

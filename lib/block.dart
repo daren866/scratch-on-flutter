@@ -4,6 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
+import 'dart:convert';
+import 'mouse.dart';
+
 class ScratchThread {
   static const int STATUS_RUNNING = 0;
   static const int STATUS_PROMISE_WAIT = 1;
@@ -159,8 +162,7 @@ class BlockUtility {
 class ScratchRuntime {
   final ProjectBank projectBank;
   final VoidCallback? onFrameUpdate;
-  bool _isRunning = false;
-
+  final ScratchMouse mouse = ScratchMouse();
   final List<ScratchThread> threads = [];
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Map<String, audioplayers.AudioPlayer> _soundHandles = {};
@@ -353,9 +355,11 @@ class ScratchRuntime {
     } else if (opcode == 'sensing_answer') {
       return '';
     } else if (opcode == 'sensing_mousex') {
-      return 0;
+      return runtime.mouse.scratchX;
     } else if (opcode == 'sensing_mousey') {
-      return 0;
+      return runtime.mouse.scratchY;
+    } else if (opcode == 'sensing_mousedown') {
+      return runtime.mouse.isDown;
     } else if (opcode == 'sensing_loudness') {
       return 0;
     } else if (opcode == 'sensing_timer') {
