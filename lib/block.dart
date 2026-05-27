@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:math';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
@@ -164,7 +164,6 @@ class ScratchRuntime {
   final List<ScratchThread> threads = [];
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Map<String, audioplayers.AudioPlayer> _soundHandles = {};
-  final Map<String, dynamic> _soundSources = {};
 
   ScratchRuntime({
     required this.projectBank,
@@ -409,7 +408,6 @@ class ScratchRuntime {
   dynamic _evaluateOperator(String opcode, Map<String, dynamic> args) {
     final num1 = _toDouble(args['NUM1'] ?? 0);
     final num2 = _toDouble(args['NUM2'] ?? 0);
-    final operand = args['OPERAND'];
 
     switch (opcode) {
       case 'operator_add':
@@ -1054,6 +1052,12 @@ class ScratchTarget {
   String say = '';
   final Map<String, double> effects = {};
   final List<Map<String, dynamic>> penStrokes = [];
+
+  ScratchTarget({
+    required this.name,
+    required this.isStage,
+    this.blocks,
+  });
 
   ScratchCostume? get currentCostume {
     if (costumes.isEmpty || currentCostumeIndex < 0 || currentCostumeIndex >= costumes.length) {
