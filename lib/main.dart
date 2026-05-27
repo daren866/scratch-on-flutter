@@ -857,7 +857,7 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
-    target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
+    target.volume = ((target.volume + volume).clamp(0, 100)).toInt();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 

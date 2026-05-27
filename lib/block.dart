@@ -198,7 +198,6 @@ class ScratchRuntime {
 
     for (final target in projectBank.targets) {
       final blocks = target.blocks;
-      if (blocks == null) continue;
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenflagclicked') {
@@ -271,13 +270,10 @@ class ScratchRuntime {
 
       if (thread.peekStack() == currentBlockId) {
         final blocks = thread.target!.blocks;
-        if (blocks == null) {
-          thread.popStack();
+        final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
+        if (nextBlockId != null) {
+          thread.pushStack(nextBlockId);
         } else {
-          final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
-          if (nextBlockId != null) {
-            thread.pushStack(nextBlockId);
-          } else {
             thread.popStack();
           }
         }
@@ -295,7 +291,7 @@ class ScratchRuntime {
 
   Map<String, dynamic>? _getBlock(ScratchTarget? target, String blockId) {
     if (target == null) return null;
-    return target.blocks?[blockId];
+    return target.blocks[blockId];
   }
 
   Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block, ScratchRuntime runtime) {
@@ -997,7 +993,6 @@ class ScratchRuntime {
     final broadcastName = args['BROADCAST_INPUT']?.toString() ?? '';
     for (final t in runtime.projectBank.targets) {
       final blocks = t.blocks;
-      if (blocks == null) continue;
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenbroadcastreceived') {
