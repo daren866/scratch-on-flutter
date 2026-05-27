@@ -367,7 +367,7 @@ class ScratchRuntime {
       final to = _getArgValues(target, block)['TO'] ?? 10;
       final fromNum = _toDouble(from);
       final toNum = _toDouble(to);
-      return (Random().nextDouble() * (toNum - fromNum) + fromNum).round();
+      return (math.Random().nextDouble() * (toNum - fromNum) + fromNum).round();
     } else if (opcode == 'operator_contains') {
       final args = _getArgValues(target, block);
       final string = args['STRING']?.toString().toLowerCase() ?? '';
@@ -565,9 +565,9 @@ class ScratchRuntime {
 
   dynamic _motionMoveSteps(Map<String, dynamic> args, ScratchTarget target) {
     final steps = _toDouble(args['STEPS'] ?? 0);
-    final radians = (90 - target.direction) * pi / 180;
-    final dx = steps * cos(radians);
-    final dy = steps * sin(radians);
+    final radians = (90 - target.direction) * math.pi / 180;
+    final dx = steps * math.cos(radians);
+    final dy = steps * math.sin(radians);
     target.x = target.x + dx;
     target.y = target.y + dy;
     onFrameUpdate?.call();
@@ -591,14 +591,14 @@ class ScratchRuntime {
   dynamic _motionGoTo(Map<String, dynamic> args, ScratchTarget target) {
     final targetName = args['TO']?.toString() ?? '';
     if (targetName == '_random_') {
-      target.x = Random().nextDouble() * 480 - 240;
-      target.y = Random().nextDouble() * 360 - 180;
+      target.x = math.Random().nextDouble() * 480 - 240;
+      target.y = math.Random().nextDouble() * 360 - 180;
     } else if (targetName == '_mouse_') {
       target.x = 0;
       target.y = 0;
     } else if (targetName == '_random_') {
-      target.x = Random().nextDouble() * 480 - 240;
-      target.y = Random().nextDouble() * 360 - 180;
+      target.x = math.Random().nextDouble() * 480 - 240;
+      target.y = math.Random().nextDouble() * 360 - 180;
     }
     onFrameUpdate?.call();
     return null;
@@ -662,7 +662,7 @@ class ScratchRuntime {
     if (dx == 0 && dy == 0) {
       target.direction = 90;
     } else {
-      target.direction = atan2(dy, dx) * 180 / pi + 90;
+      target.direction = math.atan2(dy, dx) * 180 / math.pi + 90;
     }
     onFrameUpdate?.call();
     return null;
@@ -813,7 +813,7 @@ class ScratchRuntime {
     if (forwardBackward == 'forward') {
       target.layerOrder = target.layerOrder + num;
     } else {
-      target.layerOrder = max(0, target.layerOrder - num);
+      target.layerOrder = math.max(0, target.layerOrder - num);
     }
     onFrameUpdate?.call();
     return null;
