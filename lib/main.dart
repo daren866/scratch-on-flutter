@@ -1477,6 +1477,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isRunning = false;
   BlockExecutor? _currentExecutor;
+  double _mouseX = 0;
+  double _mouseY = 0;
 
   Future<void> _runProject() async {
     if (_projectBank == null) {
@@ -1580,6 +1582,38 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                   ),
                                 ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            const Text(
+                              '当前变量',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(width: 60),
+                            const Text(
+                              '当前信息',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildVariablesTable(),
+                            ),
+                            const SizedBox(width: 24),
+                            Expanded(
+                              child: _buildInfoTable(),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1756,6 +1790,189 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildVariablesTable() {
+    if (_projectBank == null) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black38),
+        ),
+        child: const Table(
+          border: TableBorder.all(color: Colors.black38),
+          children: [
+            TableRow(
+              children: [
+                TableCell(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      '变量',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                TableCell(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      '值',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            TableRow(
+              children: [
+                TableCell(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text('我的变量'),
+                  ),
+                ),
+                TableCell(
+                  child: Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text('0'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    final allVariables = <String, dynamic>{};
+    for (final target in _projectBank!.targets) {
+      if (target.variables != null) {
+        allVariables.addAll(target.variables!);
+      }
+    }
+
+    final rows = <TableRow>[
+      const TableRow(
+        children: [
+          TableCell(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                '变量',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          TableCell(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                '值',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    for (final entry in allVariables.entries) {
+      rows.add(TableRow(
+        children: [
+          TableCell(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(entry.key),
+            ),
+          ),
+          TableCell(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(entry.value.toString()),
+            ),
+          ),
+        ],
+      ));
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black38),
+      ),
+      child: Table(
+        border: const TableBorder.all(color: Colors.black38),
+        children: rows,
+      ),
+    );
+  }
+
+  Widget _buildInfoTable() {
+    final rows = <TableRow>[
+      const TableRow(
+        children: [
+          TableCell(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                '变量',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          TableCell(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                '值',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+      TableRow(
+        children: [
+          const TableCell(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('鼠标x'),
+            ),
+          ),
+          TableCell(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(_mouseX.toString()),
+            ),
+          ),
+        ],
+      ),
+      TableRow(
+        children: [
+          const TableCell(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('鼠标y'),
+            ),
+          ),
+          TableCell(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(_mouseY.toString()),
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black38),
+      ),
+      child: Table(
+        border: const TableBorder.all(color: Colors.black38),
+        children: rows,
       ),
     );
   }
