@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
-import 'dart:convert';
+import 'models.dart';
 import 'mouse.dart';
 
 class ScratchThread {
@@ -221,7 +220,7 @@ class ScratchRuntime {
   }
 
   Future<void> _executeThread(ScratchThread thread) async {
-    while (thread.status != ScratchThread.STATUS_DONE && _isRunning) {
+    while (thread.status != ScratchThread.statusDone && _isRunning) {
       final currentBlockId = thread.peekStack();
 
       if (currentBlockId == null) {
@@ -258,7 +257,7 @@ class ScratchRuntime {
         }
       }
 
-      if (thread.status == ScratchThread.STATUS_YIELD ||
+      if (thread.status == ScratchThread.statusYield ||
           thread.status == ScratchThread.statusYieldTick) {
         thread.status = ScratchThread.statusRunning;
         await Future.delayed(const Duration(milliseconds: 33));
@@ -1019,75 +1018,4 @@ class ScratchRuntime {
     util.yield();
     return null;
   }
-}
-
-class ScratchSound {
-  final String name;
-  final Uint8List data;
-  final String format;
-  final int? rate;
-  final int? sampleCount;
-
-  ScratchSound({
-    required this.name,
-    required this.data,
-    this.format = 'wav',
-    this.rate,
-    this.sampleCount,
-  });
-}
-
-class ScratchTarget {
-  final String name;
-  final bool isStage;
-  final Map<String, dynamic>? blocks;
-  List<ScratchCostume> costumes = [];
-  List<ScratchSound> sounds = [];
-  int currentCostumeIndex = 0;
-  double x = 0;
-  double y = 0;
-  double direction = 90;
-  double size = 100;
-  bool visible = true;
-  String rotationStyle = 'normal';
-  int layerOrder = 0;
-  int volume = 100;
-  String say = '';
-  final Map<String, double> effects = {};
-  final List<Map<String, dynamic>> penStrokes = [];
-
-  ScratchTarget({
-    required this.name,
-    required this.isStage,
-    this.blocks,
-  });
-
-  ScratchCostume? get currentCostume {
-    if (costumes.isEmpty || currentCostumeIndex < 0 || currentCostumeIndex >= costumes.length) {
-      return null;
-    }
-    return costumes[currentCostumeIndex];
-  }
-}
-
-class ScratchCostume {
-  final String name;
-  final String? dataBase64;
-  final int? bitmapResolution;
-  final double? rotationCenterX;
-  final double? rotationCenterY;
-  Uint8List? imageData;
-
-  ScratchCostume({
-    required this.name,
-    this.dataBase64,
-    this.bitmapResolution,
-    this.rotationCenterX,
-    this.rotationCenterY,
-  });
-}
-
-class ProjectBank {
-  final List<ScratchTarget> targets = [];
-  Map<String, dynamic>? info;
 }
