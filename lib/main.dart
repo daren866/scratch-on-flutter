@@ -1477,8 +1477,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isRunning = false;
   BlockExecutor? _currentExecutor;
-  double _mouseX = 0;
-  double _mouseY = 0;
+  final double _mouseX = 0;
+  final double _mouseY = 0;
 
   Future<void> _runProject() async {
     if (_projectBank == null) {
@@ -1800,9 +1800,9 @@ class _MyHomePageState extends State<MyHomePage> {
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black38),
         ),
-        child: const Table(
+        child: Table(
           border: TableBorder.all(color: Colors.black38),
-          children: [
+          children: const [
             TableRow(
               children: [
                 TableCell(
@@ -1849,7 +1849,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final allVariables = <String, dynamic>{};
     for (final target in _projectBank!.targets) {
       if (target.variables != null) {
-        allVariables.addAll(target.variables!);
+        allVariables.addAll(target.variables);
       }
     }
 
@@ -1902,7 +1902,7 @@ class _MyHomePageState extends State<MyHomePage> {
         border: Border.all(color: Colors.black38),
       ),
       child: Table(
-        border: const TableBorder.all(color: Colors.black38),
+        border: TableBorder.all(color: Colors.black38),
         children: rows,
       ),
     );
@@ -1971,7 +1971,7 @@ class _MyHomePageState extends State<MyHomePage> {
         border: Border.all(color: Colors.black38),
       ),
       child: Table(
-        border: const TableBorder.all(color: Colors.black38),
+        border: TableBorder.all(color: Colors.black38),
         children: rows,
       ),
     );
