@@ -163,6 +163,7 @@ class BlockExecutor {
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Mouse mouse = Mouse();
+  bool _isMouseInStage = false;
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
@@ -1801,17 +1802,24 @@ class _MyHomePageState extends State<MyHomePage> {
     final sprites = targets.where((t) => !t.isStage).toList()
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
-    return Listener(
-      onPointerMove: (event) {
-        _handleMouseMove(event);
+    return MouseRegion(
+      onEnter: (event) {
+        _handleMouseEnter(event);
       },
-      onPointerDown: (event) {
-        _handleMouseDown(event);
+      onExit: (event) {
+        _handleMouseExit(event);
       },
-      onPointerUp: (event) {
-        _handleMouseUp(event);
-      },
-      child: Container(
+      child: Listener(
+        onPointerMove: (event) {
+          _handleMouseMove(event);
+        },
+        onPointerDown: (event) {
+          _handleMouseDown(event);
+        },
+        onPointerUp: (event) {
+          _handleMouseUp(event);
+        },
+        child: Container(
         width: 480,
         height: 320,
         color: Colors.white,
@@ -1878,6 +1886,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }),
           ],
         ),
+        ),
       ),
     );
   }
@@ -1929,6 +1938,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _handleMouseMove(PointerEvent event) {
+    if (!_isMouseInStage) {
+      return;
+    }
+    
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
     
@@ -1959,5 +1972,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _handleMouseUp(PointerUpEvent event) {
     _mouse.postData({'isDown': false});
+  }
+
+  void _handleMouseEnter(PointerEnterEvent event) {
+    _isMouseInStage = true;
+    debugPrint('鼠标进入舞台区域');
+  }
+
+  void _handleMouseExit(PointerExitEvent event) {
+    _isMouseInStage = false;
+    debugPrint('鼠标离开舞台区域');
   }
 }
