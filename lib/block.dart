@@ -1,22 +1,22 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
-import 'models.dart';
 import 'mouse.dart';
 
 class ScratchThread {
-  static const int statusRunning = 0;
-  static const int statusPromiseWait = 1;
-  static const int statusYield = 2;
-  static const int statusYieldTick = 3;
-  static const int statusDone = 4;
+  static const int STATUS_RUNNING = 0;
+  static const int STATUS_PROMISE_WAIT = 1;
+  static const int STATUS_YIELD = 2;
+  static const int STATUS_YIELD_TICK = 3;
+  static const int STATUS_DONE = 4;
 
   final String topBlock;
   final List<String> stack = [];
   final Map<String, dynamic> stackFrame = {};
-  int status = statusRunning;
+  int status = STATUS_RUNNING;
   ScratchTarget? target;
 
   ScratchThread(this.topBlock) {
@@ -119,11 +119,11 @@ class BlockUtility {
   }
 
   void yield() {
-    thread.status = ScratchThread.statusYield;
+    thread.status = ScratchThread.STATUS_YIELD;
   }
 
   void yieldTick() {
-    thread.status = ScratchThread.statusYieldTick;
+    thread.status = ScratchThread.STATUS_YIELD_TICK;
   }
 
   void stopAll() {
@@ -131,7 +131,7 @@ class BlockUtility {
   }
 
   void stopThisScript() {
-    thread.status = ScratchThread.statusDone;
+    thread.status = ScratchThread.STATUS_DONE;
   }
 
   bool stackTimerNeedsInit() {
@@ -161,11 +161,13 @@ class BlockUtility {
 class ScratchRuntime {
   final ProjectBank projectBank;
   final VoidCallback? onFrameUpdate;
-  final ScratchMouse mouse = ScratchMouse();
+  bool _isRunning = false;
+
   final List<ScratchThread> threads = [];
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Map<String, audioplayers.AudioPlayer> _soundHandles = {};
-  bool _isRunning = false;
+  
+  final Mouse mouse = Mouse();
 
   ScratchRuntime({
     required this.projectBank,
@@ -198,6 +200,7 @@ class ScratchRuntime {
 
     for (final target in projectBank.targets) {
       final blocks = target.blocks;
+      if (blocks == null) continue;
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenflagclicked') {
@@ -219,13 +222,13 @@ class ScratchRuntime {
   }
 
   Future<void> _executeThread(ScratchThread thread) async {
-    while (thread.status != ScratchThread.statusDone && _isRunning) {
+    while (thread.status != ScratchThread.STATUS_DONE && _isRunning) {
       final currentBlockId = thread.peekStack();
 
       if (currentBlockId == null) {
         thread.popStack();
         if (thread.stack.isEmpty) {
-          thread.status = ScratchThread.statusDone;
+          thread.status = ScratchThread.STATUS_DONE;
           break;
         }
         continue;
@@ -244,7 +247,7 @@ class ScratchRuntime {
       }
 
       final util = BlockUtility(thread.target!, thread, this);
-      final argValues = _getArgValues(thread.target!, block, this);
+      final argValues = _getArgValues(thread.target!, block);
 
       final reported = _executeBlock(opcode, argValues, util, thread.target!);
 
@@ -256,24 +259,27 @@ class ScratchRuntime {
         }
       }
 
-      if (thread.status == ScratchThread.statusYield ||
-          thread.status == ScratchThread.statusYieldTick) {
-        thread.status = ScratchThread.statusRunning;
+      if (thread.status == ScratchThread.STATUS_YIELD ||
+          thread.status == ScratchThread.STATUS_YIELD_TICK) {
+        thread.status = ScratchThread.STATUS_RUNNING;
         await Future.delayed(const Duration(milliseconds: 33));
         onFrameUpdate?.call();
         continue;
       }
 
-      if (thread.status == ScratchThread.statusDone) {
+      if (thread.status == ScratchThread.STATUS_DONE) {
         break;
       }
 
       if (thread.peekStack() == currentBlockId) {
         final blocks = thread.target!.blocks;
-        final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
-        if (nextBlockId != null) {
-          thread.pushStack(nextBlockId);
+        if (blocks == null) {
+          thread.popStack();
         } else {
+          final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
+          if (nextBlockId != null) {
+            thread.pushStack(nextBlockId);
+          } else {
             thread.popStack();
           }
         }
@@ -284,17 +290,17 @@ class ScratchRuntime {
       }
 
       if (thread.stack.isEmpty) {
-        thread.status = ScratchThread.statusDone;
+        thread.status = ScratchThread.STATUS_DONE;
       }
     }
   }
 
   Map<String, dynamic>? _getBlock(ScratchTarget? target, String blockId) {
     if (target == null) return null;
-    return target.blocks[blockId];
+    return target.blocks?[blockId];
   }
 
-  Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block, ScratchRuntime runtime) {
+  Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block) {
     final args = <String, dynamic>{};
     final inputs = block['inputs'] as Map<String, dynamic>? ?? {};
     final fields = block['fields'] as Map<String, dynamic>? ?? {};
@@ -313,7 +319,7 @@ class ScratchRuntime {
           final subBlockId = inputData;
           final subBlock = _getBlock(target, subBlockId);
           if (subBlock != null) {
-            args[inputName] = _evaluateReporter(subBlock, target, runtime);
+            args[inputName] = _evaluateReporter(subBlock, target);
           }
         }
       }
@@ -333,7 +339,7 @@ class ScratchRuntime {
     return args;
   }
 
-  dynamic _evaluateReporter(Map<String, dynamic> block, ScratchTarget target, ScratchRuntime runtime) {
+  dynamic _evaluateReporter(Map<String, dynamic> block, ScratchTarget target) {
     final opcode = block['opcode'] as String?;
 
     if (opcode == 'motion_xposition') {
@@ -343,19 +349,19 @@ class ScratchRuntime {
     } else if (opcode == 'motion_direction') {
       return target.direction;
     } else if (opcode == 'looks_costume') {
-      return target.currentCostumeObj?.name ?? '';
+      return target.currentCostume?.name ?? '';
     } else if (opcode == 'looks_size') {
       return target.size;
     } else if (opcode == 'looks_backdropname' || opcode == 'looks_backdrop') {
-      return target.currentCostumeObj?.name ?? '';
+      return target.currentCostume?.name ?? '';
     } else if (opcode == 'sensing_answer') {
       return '';
     } else if (opcode == 'sensing_mousex') {
-      return runtime.mouse.scratchX;
+      return mouse.ioQuery('getScratchX');
     } else if (opcode == 'sensing_mousey') {
-      return runtime.mouse.scratchY;
+      return mouse.ioQuery('getScratchY');
     } else if (opcode == 'sensing_mousedown') {
-      return runtime.mouse.isDown;
+      return mouse.ioQuery('getIsDown');
     } else if (opcode == 'sensing_loudness') {
       return 0;
     } else if (opcode == 'sensing_timer') {
@@ -363,21 +369,21 @@ class ScratchRuntime {
     } else if (opcode == 'sensing_current') {
       return DateTime.now().second;
     } else if (opcode == 'operator_random') {
-      final from = _getArgValues(target, block, runtime)['FROM'] ?? 1;
-      final to = _getArgValues(target, block, runtime)['TO'] ?? 10;
+      final from = _getArgValues(target, block)['FROM'] ?? 1;
+      final to = _getArgValues(target, block)['TO'] ?? 10;
       final fromNum = _toDouble(from);
       final toNum = _toDouble(to);
       return (math.Random().nextDouble() * (toNum - fromNum) + fromNum).round();
     } else if (opcode == 'operator_contains') {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       final string = args['STRING']?.toString().toLowerCase() ?? '';
       final cont = args['CONTAINS']?.toString().toLowerCase() ?? '';
       return string.contains(cont);
     } else if (opcode == 'operator_join') {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       return '${args['STRING1'] ?? ''}${args['STRING2'] ?? ''}';
     } else if (opcode == 'operator_letter_of') {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       final letter = _toInt(args['LETTER'] ?? 1);
       final string = args['STRING']?.toString() ?? '';
       if (letter >= 1 && letter <= string.length) {
@@ -385,20 +391,20 @@ class ScratchRuntime {
       }
       return '';
     } else if (opcode == 'operator_length') {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       return (args['STRING']?.toString() ?? '').length;
     } else if (opcode == 'operator_mod') {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       final num1 = _toDouble(args['NUM1'] ?? 0);
       final num2 = _toDouble(args['NUM2'] ?? 1);
       return (num1 % num2).toStringAsFixed(6).replaceAll(RegExp(r'\.?0+$'), '');
     } else if (opcode == 'operator_round') {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       return _toDouble(args['NUM'] ?? 0).round();
     }
 
     if (opcode != null && opcode.startsWith('operator_')) {
-      final args = _getArgValues(target, block, runtime);
+      final args = _getArgValues(target, block);
       return _evaluateOperator(opcode, args);
     }
 
@@ -594,8 +600,8 @@ class ScratchRuntime {
       target.x = math.Random().nextDouble() * 480 - 240;
       target.y = math.Random().nextDouble() * 360 - 180;
     } else if (targetName == '_mouse_') {
-      target.x = 0;
-      target.y = 0;
+      target.x = mouse.ioQuery('getScratchX') ?? 0;
+      target.y = mouse.ioQuery('getScratchY') ?? 0;
     } else if (targetName == '_random_') {
       target.x = math.Random().nextDouble() * 480 - 240;
       target.y = math.Random().nextDouble() * 360 - 180;
@@ -690,7 +696,7 @@ class ScratchRuntime {
     final costumeName = args['COSTUME']?.toString() ?? '';
     for (final costume in target.costumes) {
       if (costume.name == costumeName) {
-        target.currentCostume = target.costumes.indexOf(costume);
+        target.currentCostumeIndex = target.costumes.indexOf(costume);
         break;
       }
     }
@@ -702,7 +708,7 @@ class ScratchRuntime {
     final backdropName = args['BACKDROP']?.toString() ?? '';
     for (final costume in target.costumes) {
       if (costume.name == backdropName) {
-        target.currentCostume = target.costumes.indexOf(costume);
+        target.currentCostumeIndex = target.costumes.indexOf(costume);
         break;
       }
     }
@@ -833,7 +839,9 @@ class ScratchRuntime {
   dynamic _controlRepeat(Map<String, dynamic> args, BlockUtility util) {
     final times = _toInt(args['TIMES'] ?? 10);
 
-    util.thread.loopCounter ??= times;
+    if (util.thread.loopCounter == null) {
+      util.thread.loopCounter = times;
+    }
 
     util.thread.loopCounter = (util.thread.loopCounter as int) - 1;
 
@@ -981,7 +989,7 @@ class ScratchRuntime {
     target.penStrokes.add({
       'x': target.x,
       'y': target.y,
-      'costume': target.currentCostume,
+      'costume': target.currentCostumeIndex,
       'direction': target.direction,
       'size': target.size,
     });
@@ -993,6 +1001,7 @@ class ScratchRuntime {
     final broadcastName = args['BROADCAST_INPUT']?.toString() ?? '';
     for (final t in runtime.projectBank.targets) {
       final blocks = t.blocks;
+      if (blocks == null) continue;
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenbroadcastreceived') {
@@ -1013,4 +1022,75 @@ class ScratchRuntime {
     util.yield();
     return null;
   }
+}
+
+class ScratchSound {
+  final String name;
+  final Uint8List data;
+  final String format;
+  final int? rate;
+  final int? sampleCount;
+
+  ScratchSound({
+    required this.name,
+    required this.data,
+    this.format = 'wav',
+    this.rate,
+    this.sampleCount,
+  });
+}
+
+class ScratchTarget {
+  final String name;
+  final bool isStage;
+  final Map<String, dynamic>? blocks;
+  List<ScratchCostume> costumes = [];
+  List<ScratchSound> sounds = [];
+  int currentCostumeIndex = 0;
+  double x = 0;
+  double y = 0;
+  double direction = 90;
+  double size = 100;
+  bool visible = true;
+  String rotationStyle = 'normal';
+  int layerOrder = 0;
+  int volume = 100;
+  String say = '';
+  final Map<String, double> effects = {};
+  final List<Map<String, dynamic>> penStrokes = [];
+
+  ScratchTarget({
+    required this.name,
+    required this.isStage,
+    this.blocks,
+  });
+
+  ScratchCostume? get currentCostume {
+    if (costumes.isEmpty || currentCostumeIndex < 0 || currentCostumeIndex >= costumes.length) {
+      return null;
+    }
+    return costumes[currentCostumeIndex];
+  }
+}
+
+class ScratchCostume {
+  final String name;
+  final String? dataBase64;
+  final int? bitmapResolution;
+  final double? rotationCenterX;
+  final double? rotationCenterY;
+  Uint8List? imageData;
+
+  ScratchCostume({
+    required this.name,
+    this.dataBase64,
+    this.bitmapResolution,
+    this.rotationCenterX,
+    this.rotationCenterY,
+  });
+}
+
+class ProjectBank {
+  final List<ScratchTarget> targets = [];
+  Map<String, dynamic>? info;
 }

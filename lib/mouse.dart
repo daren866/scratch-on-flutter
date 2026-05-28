@@ -1,46 +1,71 @@
-class ScratchMouse {
-  int _clientX = 0;
-  int _clientY = 0;
-  int _scratchX = 0;
-  int _scratchY = 0;
+import 'dart:math' as math;
+
+class Mouse {
+  double _clientX = 0;
+  double _clientY = 0;
+  double _scratchX = 0;
+  double _scratchY = 0;
   bool _isDown = false;
 
-  final int canvasWidth = 480;
-  final int canvasHeight = 360;
-
-  int get scratchX => _scratchX;
-  int get scratchY => _scratchY;
+  double get clientX => _clientX;
+  double get clientY => _clientY;
+  double get scratchX => _scratchX;
+  double get scratchY => _scratchY;
   bool get isDown => _isDown;
 
-  void updatePosition(int clientX, int clientY) {
-    _clientX = clientX;
-    _clientY = clientY;
+  void postData(Map<String, dynamic> data) {
+    if (data.containsKey('x')) {
+      _clientX = _toDouble(data['x']);
+      final canvasWidth = _toDouble(data['canvasWidth'] ?? 480);
+      _scratchX = _toScratchX(_clientX, canvasWidth);
+    }
 
-    _scratchX = _toScratchX(clientX);
-    _scratchY = _toScratchY(clientY);
+    if (data.containsKey('y')) {
+      _clientY = _toDouble(data['y']);
+      final canvasHeight = _toDouble(data['canvasHeight'] ?? 360);
+      _scratchY = _toScratchY(_clientY, canvasHeight);
+    }
+
+    if (data.containsKey('isDown')) {
+      _isDown = data['isDown'] as bool;
+    }
   }
 
-  void updateMouseDown(bool isDown) {
-    _isDown = isDown;
+  double _toScratchX(double clientX, double canvasWidth) {
+    final value = 480 * ((clientX / canvasWidth) - 0.5);
+    return _clamp(value, -240, 240);
   }
 
-  int _toScratchX(int clientX) {
-    final x = (clientX / canvasWidth - 0.5) * 480;
-    return x.round().clamp(-240, 240);
+  double _toScratchY(double clientY, double canvasHeight) {
+    final value = -360 * ((clientY / canvasHeight) - 0.5);
+    return _clamp(value, -180, 180);
   }
 
-  int _toScratchY(int clientY) {
-    final y = -(clientY / canvasHeight - 0.5) * 360;
-    return y.round().clamp(-180, 180);
+  double _clamp(double value, double min, double max) {
+    return math.max(min, math.min(max, value));
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'clientX': _clientX,
-      'clientY': _clientY,
-      'scratchX': _scratchX,
-      'scratchY': _scratchY,
-      'isDown': _isDown,
-    };
+  double _toDouble(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    return 0.0;
+  }
+
+  dynamic ioQuery(String query) {
+    switch (query) {
+      case 'getScratchX':
+        return _scratchX;
+      case 'getScratchY':
+        return _scratchY;
+      case 'getIsDown':
+        return _isDown;
+      case 'getClientX':
+        return _clientX;
+      case 'getClientY':
+        return _clientY;
+      default:
+        return null;
+    }
   }
 }
