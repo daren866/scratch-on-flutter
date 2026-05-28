@@ -162,9 +162,9 @@ class BlockExecutor {
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
-  final Mouse mouse = Mouse();
+  final Mouse mouse;
 
-  BlockExecutor(this.projectBank, {this.onFrameUpdate});
+  BlockExecutor(this.projectBank, {this.onFrameUpdate, required this.mouse});
 
   void stop() {
     isRunning = false;
@@ -1522,6 +1522,7 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {});
         }
       },
+      mouse: _mouse,
     );
 
     setState(() {
