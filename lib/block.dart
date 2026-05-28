@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
@@ -201,7 +200,6 @@ class ScratchRuntime {
 
     for (final target in projectBank.targets) {
       final blocks = target.blocks;
-      if (blocks == null) continue;
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenflagclicked') {
@@ -274,15 +272,11 @@ class ScratchRuntime {
 
       if (thread.peekStack() == currentBlockId) {
         final blocks = thread.target!.blocks;
-        if (blocks == null) {
-          thread.popStack();
+        final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
+        if (nextBlockId != null) {
+          thread.pushStack(nextBlockId);
         } else {
-          final nextBlockId = thread.getNextBlock(blocks, currentBlockId);
-          if (nextBlockId != null) {
-            thread.pushStack(nextBlockId);
-          } else {
-            thread.popStack();
-          }
+          thread.popStack();
         }
       }
 
@@ -303,8 +297,8 @@ class ScratchRuntime {
 
   Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block) {
     final args = <String, dynamic>{};
-    final inputs = block['inputs'] as Map<String, dynamic>? ?? {};
-    final fields = block['fields'] as Map<String, dynamic>? ?? {};
+    final inputs = (block['inputs'] as Map<String, dynamic>?) ?? {};
+    final fields = (block['fields'] as Map<String, dynamic>?) ?? {};
 
     for (final entry in inputs.entries) {
       final inputName = entry.key;
@@ -350,11 +344,11 @@ class ScratchRuntime {
     } else if (opcode == 'motion_direction') {
       return target.direction;
     } else if (opcode == 'looks_costume') {
-      return target.currentCostume?.name ?? '';
+      return target.currentCostumeObj?.name ?? '';
     } else if (opcode == 'looks_size') {
       return target.size;
     } else if (opcode == 'looks_backdropname' || opcode == 'looks_backdrop') {
-      return target.currentCostume?.name ?? '';
+      return target.currentCostumeObj?.name ?? '';
     } else if (opcode == 'sensing_answer') {
       return '';
     } else if (opcode == 'sensing_mousex') {
@@ -697,7 +691,7 @@ class ScratchRuntime {
     final costumeName = args['COSTUME']?.toString() ?? '';
     for (final costume in target.costumes) {
       if (costume.name == costumeName) {
-        target.currentCostumeIndex = target.costumes.indexOf(costume);
+        target.currentCostume = target.costumes.indexOf(costume);
         break;
       }
     }
@@ -709,7 +703,7 @@ class ScratchRuntime {
     final backdropName = args['BACKDROP']?.toString() ?? '';
     for (final costume in target.costumes) {
       if (costume.name == backdropName) {
-        target.currentCostumeIndex = target.costumes.indexOf(costume);
+        target.currentCostume = target.costumes.indexOf(costume);
         break;
       }
     }
@@ -964,9 +958,9 @@ class ScratchRuntime {
   }
 
   dynamic _soundSetVolumeTo(Map<String, dynamic> args, ScratchTarget target) {
-    target.volume = _toInt(args['VOLUME'] ?? 100);
+    target.volume = _toDouble(args['VOLUME'] ?? 100);
     for (final player in _activePlayers) {
-      player.setVolume(target.volume.toDouble());
+      player.setVolume(target.volume);
     }
     return null;
   }
@@ -990,7 +984,7 @@ class ScratchRuntime {
     target.penStrokes.add({
       'x': target.x,
       'y': target.y,
-      'costume': target.currentCostumeIndex,
+      'costume': target.currentCostume,
       'direction': target.direction,
       'size': target.size,
     });
@@ -1006,7 +1000,8 @@ class ScratchRuntime {
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenbroadcastreceived') {
-          final receivedBroadcast = block['fields']?['BROADCAST_OPTION']?[0];
+          final fields = block['fields'] as Map<String, dynamic>?;
+          final receivedBroadcast = fields?['BROADCAST_OPTION']?[0];
           if (receivedBroadcast?.toString() == broadcastName) {
             final thread = ScratchThread(entry.key);
             thread.target = t;
