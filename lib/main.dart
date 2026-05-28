@@ -1800,14 +1800,14 @@ class _MyHomePageState extends State<MyHomePage> {
     final sprites = targets.where((t) => !t.isStage).toList()
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
-    return MouseRegion(
-      onHover: (event) {
+    return Listener(
+      onPointerHover: (event) {
         _handleMouseMove(event);
       },
-      onDown: (event) {
+      onPointerDown: (event) {
         _handleMouseDown(event);
       },
-      onUp: (event) {
+      onPointerUp: (event) {
         _handleMouseUp(event);
       },
       child: Container(
@@ -1817,65 +1817,66 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
-            _buildCostumeWidget(
-              stage.costumes[stage.currentCostume],
-              fit: BoxFit.cover,
-            )
-          else
-            Container(
-              color: Colors.lightBlue[100],
-              child: const Center(
-                child: Text('舞台背景'),
+            if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
+              _buildCostumeWidget(
+                stage.costumes[stage.currentCostume],
+                fit: BoxFit.cover,
+              )
+            else
+              Container(
+                color: Colors.lightBlue[100],
+                child: const Center(
+                  child: Text('舞台背景'),
+                ),
               ),
-            ),
-          ...sprites.map((sprite) {
-            if (!sprite.isVisible || sprite.costumes.isEmpty) {
-              return const SizedBox.shrink();
-            }
+            ...sprites.map((sprite) {
+              if (!sprite.isVisible || sprite.costumes.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
-            final costume = sprite.costumes[sprite.currentCostume];
-            if (costume.data.isEmpty) {
-              return const SizedBox.shrink();
-            }
+              final costume = sprite.costumes[sprite.currentCostume];
+              if (costume.data.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
-            final scratchStageWidth = 480.0;
-            final scratchStageHeight = 360.0;
-            final renderWidth = 480.0;
-            final renderHeight = 320.0;
+              final scratchStageWidth = 480.0;
+              final scratchStageHeight = 360.0;
+              final renderWidth = 480.0;
+              final renderHeight = 320.0;
 
-            final scaleX = renderWidth / scratchStageWidth;
-            final scaleY = renderHeight / scratchStageHeight;
+              final scaleX = renderWidth / scratchStageWidth;
+              final scaleY = renderHeight / scratchStageHeight;
 
-            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
-            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
+              final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
+              final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
 
-            final scaledSize = sprite.size / 100 / costume.bitmapResolution;
-            final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
-            final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
+              final scaledSize = sprite.size / 100 / costume.bitmapResolution;
+              final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
+              final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
 
-            Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
+              Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
 
-            if (sprite.rotationStyle == 'left-right' &&
-                (sprite.direction < 0 || sprite.direction > 180)) {
-              child = Transform.flip(flipX: true, child: child);
-            } else if (sprite.rotationStyle == 'all around') {
-              child = Transform.rotate(
-                angle: (sprite.direction - 90) * math.pi / 180,
-                child: child,
+              if (sprite.rotationStyle == 'left-right' &&
+                  (sprite.direction < 0 || sprite.direction > 180)) {
+                child = Transform.flip(flipX: true, child: child);
+              } else if (sprite.rotationStyle == 'all around') {
+                child = Transform.rotate(
+                  angle: (sprite.direction - 90) * math.pi / 180,
+                  child: child,
+                );
+              }
+
+              return Positioned(
+                left: screenX - scaledRotationCenterX,
+                top: screenY - scaledRotationCenterY,
+                child: Transform.scale(
+                  scale: scaledSize,
+                  child: child,
+                ),
               );
-            }
-
-            return Positioned(
-              left: screenX - scaledRotationCenterX,
-              top: screenY - scaledRotationCenterY,
-              child: Transform.scale(
-                scale: scaledSize,
-                child: child,
-              ),
-            );
-          }),
-        ],
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -1926,7 +1927,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return imageWidget;
   }
 
-  void _handleMouseMove(MouseHoverEvent event) {
+  void _handleMouseMove(PointerHoverEvent event) {
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
     
@@ -1938,11 +1939,11 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _handleMouseDown(MouseDownEvent event) {
+  void _handleMouseDown(PointerDownEvent event) {
     _mouse.postData({'isDown': true});
   }
 
-  void _handleMouseUp(MouseUpEvent event) {
+  void _handleMouseUp(PointerUpEvent event) {
     _mouse.postData({'isDown': false});
   }
 }
