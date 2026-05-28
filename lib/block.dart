@@ -292,7 +292,7 @@ class ScratchRuntime {
 
   Map<String, dynamic>? _getBlock(ScratchTarget? target, String blockId) {
     if (target == null) return null;
-    return target.blocks?[blockId];
+    return target.blocks[blockId];
   }
 
   Map<String, dynamic> _getArgValues(ScratchTarget target, Map<String, dynamic> block) {
@@ -786,13 +786,13 @@ class ScratchRuntime {
   }
 
   dynamic _looksShow(ScratchTarget target) {
-    target.visible = true;
+    target.isVisible = true;
     onFrameUpdate?.call();
     return null;
   }
 
   dynamic _looksHide(ScratchTarget target) {
-    target.visible = false;
+    target.isVisible = false;
     onFrameUpdate?.call();
     return null;
   }
@@ -996,7 +996,6 @@ class ScratchRuntime {
     final broadcastName = args['BROADCAST_INPUT']?.toString() ?? '';
     for (final t in runtime.projectBank.targets) {
       final blocks = t.blocks;
-      if (blocks == null) continue;
       for (final entry in blocks.entries) {
         final block = entry.value;
         if (block is Map && block['opcode'] == 'event_whenbroadcastreceived') {
