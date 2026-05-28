@@ -357,6 +357,9 @@ class ScratchRuntime {
       return mouse.ioQuery('getScratchY');
     } else if (opcode == 'sensing_mousedown') {
       return mouse.ioQuery('getIsDown');
+    } else if (opcode == 'sensing_touchingobject') {
+      final touchingObj = _getArgValues(target, block)['TOUCHINGOBJECTMENU']?.toString() ?? '';
+      return _isTouchingObject(target, touchingObj);
     } else if (opcode == 'sensing_loudness') {
       return 0;
     } else if (opcode == 'sensing_timer') {
@@ -1016,5 +1019,35 @@ class ScratchRuntime {
     _eventBroadcast(args, target, runtime);
     util.yield();
     return null;
+  }
+
+  bool _isTouchingObject(ScratchTarget target, String touchingObj) {
+    if (touchingObj == '_mouse_') {
+      final mouseX = mouse.ioQuery('getScratchX') as double? ?? 0;
+      final mouseY = mouse.ioQuery('getScratchY') as double? ?? 0;
+      return _isPointInTarget(mouseX, mouseY, target);
+    }
+
+    for (final t in projectBank.targets) {
+      if (t.name == touchingObj) {
+        return _isPointInTarget(t.x, t.y, target);
+      }
+    }
+
+    return false;
+  }
+
+  bool _isPointInTarget(double pointX, double pointY, ScratchTarget target) {
+    if (!target.isVisible) return false;
+    if (target.isStage) return false;
+
+    final sizeScale = target.size / 100;
+    final width = 48 * sizeScale;
+    final height = 48 * sizeScale;
+
+    return (pointX >= target.x - width / 2 &&
+            pointX <= target.x + width / 2 &&
+            pointY >= target.y - height / 2 &&
+            pointY <= target.y + height / 2);
   }
 }

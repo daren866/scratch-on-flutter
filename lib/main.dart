@@ -8,6 +8,8 @@ import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
 
+import 'mouse.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -160,6 +162,7 @@ class BlockExecutor {
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
+  final Mouse mouse = Mouse();
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
@@ -1215,7 +1218,31 @@ class BlockExecutor {
   }
 
   Future<void> _executeSensingTouchingObject(ScratchTarget target, Map<String, dynamic> block) async {
+    final fields = block['fields'] as Map? ?? {};
+    final touchingObjData = fields['TOUCHINGOBJECTMENU'] as List?;
+    final touchingObj = touchingObjData != null && touchingObjData.isNotEmpty ? _castToString(touchingObjData[0]) : '';
+
+    if (touchingObj == '_mouse_') {
+      final mouseX = mouse.ioQuery('getScratchX') as double? ?? 0;
+      final mouseY = mouse.ioQuery('getScratchY') as double? ?? 0;
+      final isTouching = _isPointInTarget(mouseX, mouseY, target);
+      debugPrint('角色 ${target.name} 是否碰到鼠标: $isTouching');
+    }
     await Future.delayed(const Duration(milliseconds: 10));
+  }
+
+  bool _isPointInTarget(double pointX, double pointY, ScratchTarget target) {
+    if (!target.isVisible) return false;
+    if (target.isStage) return false;
+
+    final sizeScale = target.size / 100;
+    final width = 48 * sizeScale;
+    final height = 48 * sizeScale;
+
+    return (pointX >= target.x - width / 2 &&
+            pointX <= target.x + width / 2 &&
+            pointY >= target.y - height / 2 &&
+            pointY <= target.y + height / 2);
   }
 
   Future<void> _executeSensingTouchingColor(ScratchTarget target, Map<String, dynamic> block) async {
@@ -1760,6 +1787,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  final Mouse _mouse = Mouse();
+
   Widget _buildStageWidget() {
     final targets = _projectBank!.targets;
 
@@ -1771,13 +1800,23 @@ class _MyHomePageState extends State<MyHomePage> {
     final sprites = targets.where((t) => !t.isStage).toList()
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
-    return Container(
-      width: 480,
-      height: 320,
-      color: Colors.white,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
+    return MouseRegion(
+      onHover: (event) {
+        _handleMouseMove(event);
+      },
+      onDown: (event) {
+        _handleMouseDown(event);
+      },
+      onUp: (event) {
+        _handleMouseUp(event);
+      },
+      child: Container(
+        width: 480,
+        height: 320,
+        color: Colors.white,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
           if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
             _buildCostumeWidget(
               stage.costumes[stage.currentCostume],
@@ -1885,5 +1924,25 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     return imageWidget;
+  }
+
+  void _handleMouseMove(MouseHoverEvent event) {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final position = renderBox.globalToLocal(event.position);
+    
+    _mouse.postData({
+      'x': position.dx,
+      'y': position.dy,
+      'canvasWidth': 480.0,
+      'canvasHeight': 360.0,
+    });
+  }
+
+  void _handleMouseDown(MouseDownEvent event) {
+    _mouse.postData({'isDown': true});
+  }
+
+  void _handleMouseUp(MouseUpEvent event) {
+    _mouse.postData({'isDown': false});
   }
 }
