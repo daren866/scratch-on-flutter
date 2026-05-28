@@ -1255,11 +1255,15 @@ class BlockExecutor {
   }
 
   Future<double> _executeSensingMouseX(ScratchTarget target, Map<String, dynamic> block) async {
-    return mouse.ioQuery('getScratchX') as double? ?? 0;
+    final mouseX = mouse.ioQuery('getScratchX') as double? ?? 0;
+    debugPrint('_executeSensingMouseX: 返回 $mouseX');
+    return mouseX;
   }
 
   Future<double> _executeSensingMouseY(ScratchTarget target, Map<String, dynamic> block) async {
-    return mouse.ioQuery('getScratchY') as double? ?? 0;
+    final mouseY = mouse.ioQuery('getScratchY') as double? ?? 0;
+    debugPrint('_executeSensingMouseY: 返回 $mouseY');
+    return mouseY;
   }
 
   Future<bool> _executeSensingMouseDown(ScratchTarget target, Map<String, dynamic> block) async {
@@ -1940,6 +1944,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _handleMouseMove(PointerEvent event) {
     if (!_isMouseInStage) {
+      debugPrint('鼠标移动但不在舞台区域内，忽略');
       return;
     }
     
@@ -1956,6 +1961,8 @@ class _MyHomePageState extends State<MyHomePage> {
     
     final scratchX = 480 * ((position.dx / scaleX / renderWidth) - 0.5);
     final scratchY = -360 * ((position.dy / scaleY / renderHeight) - 0.5);
+    
+    debugPrint('鼠标移动: 客户端(${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}) → Scratch($scratchX, $scratchY)');
     
     _mouse.postData({
       'x': scratchX,
