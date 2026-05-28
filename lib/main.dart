@@ -1217,18 +1217,19 @@ class BlockExecutor {
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
-  Future<void> _executeSensingTouchingObject(ScratchTarget target, Map<String, dynamic> block) async {
+  Future<bool> _executeSensingTouchingObject(ScratchTarget target, Map<String, dynamic> block) async {
     final fields = block['fields'] as Map? ?? {};
     final touchingObjData = fields['TOUCHINGOBJECTMENU'] as List?;
     final touchingObj = touchingObjData != null && touchingObjData.isNotEmpty ? _castToString(touchingObjData[0]) : '';
 
+    bool isTouching = false;
     if (touchingObj == '_mouse_') {
       final mouseX = mouse.ioQuery('getScratchX') as double? ?? 0;
       final mouseY = mouse.ioQuery('getScratchY') as double? ?? 0;
-      final isTouching = _isPointInTarget(mouseX, mouseY, target);
-      debugPrint('角色 ${target.name} 是否碰到鼠标: $isTouching');
+      isTouching = _isPointInTarget(mouseX, mouseY, target);
+      debugPrint('角色 ${target.name} 是否碰到鼠标: $isTouching (鼠标坐标: $mouseX, $mouseY)');
     }
-    await Future.delayed(const Duration(milliseconds: 10));
+    return isTouching;
   }
 
   bool _isPointInTarget(double pointX, double pointY, ScratchTarget target) {
@@ -1239,10 +1240,10 @@ class BlockExecutor {
     final width = 48 * sizeScale;
     final height = 48 * sizeScale;
 
-    return (pointX >= target.x - width / 2 &&
-            pointX <= target.x + width / 2 &&
-            pointY >= target.y - height / 2 &&
-            pointY <= target.y + height / 2);
+    final inXRange = pointX >= target.x - width / 2 && pointX <= target.x + width / 2;
+    final inYRange = pointY >= target.y - height / 2 && pointY <= target.y + height / 2;
+
+    return inXRange && inYRange;
   }
 
   Future<void> _executeSensingTouchingColor(ScratchTarget target, Map<String, dynamic> block) async {
@@ -1253,16 +1254,16 @@ class BlockExecutor {
     await Future.delayed(const Duration(milliseconds: 10));
   }
 
-  Future<void> _executeSensingMouseX(ScratchTarget target, Map<String, dynamic> block) async {
-    await Future.delayed(const Duration(milliseconds: 10));
+  Future<double> _executeSensingMouseX(ScratchTarget target, Map<String, dynamic> block) async {
+    return mouse.ioQuery('getScratchX') as double? ?? 0;
   }
 
-  Future<void> _executeSensingMouseY(ScratchTarget target, Map<String, dynamic> block) async {
-    await Future.delayed(const Duration(milliseconds: 10));
+  Future<double> _executeSensingMouseY(ScratchTarget target, Map<String, dynamic> block) async {
+    return mouse.ioQuery('getScratchY') as double? ?? 0;
   }
 
-  Future<void> _executeSensingMouseDown(ScratchTarget target, Map<String, dynamic> block) async {
-    await Future.delayed(const Duration(milliseconds: 10));
+  Future<bool> _executeSensingMouseDown(ScratchTarget target, Map<String, dynamic> block) async {
+    return mouse.ioQuery('getIsDown') as bool? ?? false;
   }
 
   Future<void> _executeSensingKeyPressed(ScratchTarget target, Map<String, dynamic> block) async {
@@ -1931,12 +1932,25 @@ class _MyHomePageState extends State<MyHomePage> {
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
     
+    final scratchStageWidth = 480.0;
+    final scratchStageHeight = 360.0;
+    final renderWidth = 480.0;
+    final renderHeight = 320.0;
+    
+    final scaleX = renderWidth / scratchStageWidth;
+    final scaleY = renderHeight / scratchStageHeight;
+    
+    final scratchX = 480 * ((position.dx / scaleX / renderWidth) - 0.5);
+    final scratchY = -360 * ((position.dy / scaleY / renderHeight) - 0.5);
+    
     _mouse.postData({
-      'x': position.dx,
-      'y': position.dy,
-      'canvasWidth': 480.0,
-      'canvasHeight': 360.0,
+      'x': scratchX,
+      'y': scratchY,
+      'canvasWidth': scratchStageWidth,
+      'canvasHeight': scratchStageHeight,
     });
+    
+    debugPrint('鼠标移动: 客户端坐标(${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}) → Scratch坐标(${scratchX.toStringAsFixed(1)}, ${scratchY.toStringAsFixed(1)})');
   }
 
   void _handleMouseDown(PointerDownEvent event) {
