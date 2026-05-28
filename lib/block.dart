@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'mouse.dart';
+import 'models.dart';
 
 class ScratchThread {
   static const int STATUS_RUNNING = 0;

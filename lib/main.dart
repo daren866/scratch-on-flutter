@@ -7,8 +7,6 @@ import 'package:archive/archive.dart';
 import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'dart:convert';
-import 'models.dart';
-import 'block.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,14 +28,140 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class ScratchAsset {
+  final String name;
+  final String md5ext;
+  final String dataFormat;
+  final Uint8List data;
+
+  ScratchAsset({
+    required this.name,
+    required this.md5ext,
+    required this.dataFormat,
+    required this.data,
+  });
+}
+
+class ScratchCostume extends ScratchAsset {
+  final int rotationCenterX;
+  final int rotationCenterY;
+  final int bitmapResolution;
+
+  ScratchCostume({
+    required super.name,
+    required super.md5ext,
+    required super.dataFormat,
+    required super.data,
+    required this.rotationCenterX,
+    required this.rotationCenterY,
+    required this.bitmapResolution,
+  });
+}
+
+class ScratchSound extends ScratchAsset {
+  final String format;
+  final int rate;
+  final int sampleCount;
+
+  ScratchSound({
+    required super.name,
+    required super.md5ext,
+    required super.dataFormat,
+    required super.data,
+    required this.format,
+    required this.rate,
+    required this.sampleCount,
+  });
+}
+
+class ScratchTarget {
+  final String name;
+  final bool isStage;
+  bool isVisible;
+  double x;
+  double y;
+  double direction;
+  double size;
+  int currentCostume;
+  final Map<String, dynamic> variables;
+  final Map<String, dynamic> lists;
+  final Map<String, dynamic> broadcasts;
+  final Map<String, dynamic> blocks;
+  final List<ScratchCostume> costumes;
+  final List<ScratchSound> sounds;
+  int layerOrder;
+  double volume;
+  String rotationStyle;
+
+  ScratchTarget({
+    required this.name,
+    required this.isStage,
+    this.isVisible = true,
+    this.x = 0,
+    this.y = 0,
+    this.direction = 90,
+    this.size = 100,
+    this.currentCostume = 0,
+    Map<String, dynamic>? variables,
+    Map<String, dynamic>? lists,
+    Map<String, dynamic>? broadcasts,
+    Map<String, dynamic>? blocks,
+    List<ScratchCostume>? costumes,
+    List<ScratchSound>? sounds,
+    this.layerOrder = 0,
+    this.volume = 100,
+    this.rotationStyle = 'all around',
+  })  : variables = variables ?? {},
+        lists = lists ?? {},
+        broadcasts = broadcasts ?? {},
+        blocks = blocks ?? {},
+        costumes = costumes ?? [],
+        sounds = sounds ?? [];
+
+  void setXY(double newX, double newY) {
+    x = newX;
+    y = newY;
+  }
+
+  void setDirection(double newDirection) {
+    direction = newDirection;
+  }
+
+  void setX(double newX) {
+    x = newX;
+  }
+
+  void setY(double newY) {
+    y = newY;
+  }
+}
+
+class ProjectBank {
+  final Map<String, dynamic> projectJson;
+  final List<ScratchTarget> targets;
+  final List<ScratchCostume> allCostumes;
+  final List<ScratchSound> allSounds;
+  final DateTime loadedAt;
+
+  ProjectBank({
+    required this.projectJson,
+    required this.targets,
+    required this.allCostumes,
+    required this.allSounds,
+    DateTime? loadedAt,
+  }) : loadedAt = loadedAt ?? DateTime.now();
+
+  String get projectVersion => projectJson['projectVersion']?.toString() ?? '3.0';
+  String? get projectId => projectJson['projectId'];
+}
+
 class BlockExecutor {
   final ProjectBank projectBank;
-  final ScratchRuntime? scratchRuntime;
   bool isRunning = false;
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
 
-  BlockExecutor(this.projectBank, {this.scratchRuntime, this.onFrameUpdate});
+  BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
   void stop() {
     isRunning = false;
@@ -729,7 +853,7 @@ class BlockExecutor {
     final frontBack = frontBackData != null && frontBackData.isNotEmpty ? _castToString(frontBackData[0]) : '';
     
     if (frontBack == 'front') {
-      target.layerOrder = projectBank.targets.fold(0, (max, t) => math.max(max, t.layerOrder)) + 1;
+      target.layerOrder = projectBank.targets.fold<int>(0, (max, t) => math.max(max, t.layerOrder)) + 1;
     } else {
       target.layerOrder = 0;
     }
@@ -857,7 +981,7 @@ class BlockExecutor {
     final inputs = block['inputs'] as Map? ?? {};
     final volumeData = inputs['VOLUME'] as List?;
     final volume = volumeData != null && volumeData.length >= 2 ? _castToNumber(volumeData[1]) : 0;
-    target.volume = ((target.volume + volume).clamp(0, 100)).toInt();
+    target.volume = ((target.volume + volume).clamp(0, 100)).toDouble();
     await Future.delayed(const Duration(milliseconds: 50));
   }
 
@@ -1353,7 +1477,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _isRunning = false;
   BlockExecutor? _currentExecutor;
-  ScratchRuntime? _scratchRuntime;
 
   Future<void> _runProject() async {
     if (_projectBank == null) {
@@ -1363,18 +1486,8 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    _scratchRuntime = ScratchRuntime(
-      projectBank: _projectBank!,
-      onFrameUpdate: () {
-        if (mounted) {
-          setState(() {});
-        }
-      },
-    );
-
     _currentExecutor = BlockExecutor(
       _projectBank!,
-      scratchRuntime: _scratchRuntime,
       onFrameUpdate: () {
         if (mounted) {
           setState(() {});
@@ -1658,90 +1771,72 @@ class _MyHomePageState extends State<MyHomePage> {
     final sprites = targets.where((t) => !t.isStage).toList()
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
-    return Listener(
-      onPointerMove: (event) {
-        final renderBox = context.findRenderObject() as RenderBox?;
-        if (renderBox != null) {
-          final localPosition = renderBox.globalToLocal(event.position);
-          _scratchRuntime?.mouse.updatePosition(
-            localPosition.dx.toInt(),
-            localPosition.dy.toInt(),
-          );
-        }
-      },
-      onPointerDown: (event) {
-        _scratchRuntime?.mouse.updateMouseDown(true);
-      },
-      onPointerUp: (event) {
-        _scratchRuntime?.mouse.updateMouseDown(false);
-      },
-      child: Container(
-        width: 480,
-        height: 320,
-        color: Colors.white,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
-              _buildCostumeWidget(
-                stage.costumes[stage.currentCostume],
-                fit: BoxFit.cover,
-              )
-            else
-              Container(
-                color: Colors.lightBlue[100],
-                child: const Center(
-                  child: Text('舞台背景'),
-                ),
+    return Container(
+      width: 480,
+      height: 320,
+      color: Colors.white,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (stage.costumes.isNotEmpty && stage.costumes[stage.currentCostume].data.isNotEmpty)
+            _buildCostumeWidget(
+              stage.costumes[stage.currentCostume],
+              fit: BoxFit.cover,
+            )
+          else
+            Container(
+              color: Colors.lightBlue[100],
+              child: const Center(
+                child: Text('舞台背景'),
               ),
-            ...sprites.map((sprite) {
-              if (!sprite.isVisible || sprite.costumes.isEmpty) {
-                return const SizedBox.shrink();
-              }
+            ),
+          ...sprites.map((sprite) {
+            if (!sprite.isVisible || sprite.costumes.isEmpty) {
+              return const SizedBox.shrink();
+            }
 
-              final costume = sprite.costumes[sprite.currentCostume];
-              if (costume.data.isEmpty) {
-                return const SizedBox.shrink();
-              }
+            final costume = sprite.costumes[sprite.currentCostume];
+            if (costume.data.isEmpty) {
+              return const SizedBox.shrink();
+            }
 
-              final scratchStageWidth = 480.0;
-              final scratchStageHeight = 360.0;
-              final renderWidth = 480.0;
-              final renderHeight = 320.0;
+            final scratchStageWidth = 480.0;
+            final scratchStageHeight = 360.0;
+            final renderWidth = 480.0;
+            final renderHeight = 320.0;
 
-              final scaleX = renderWidth / scratchStageWidth;
-              final scaleY = renderHeight / scratchStageHeight;
+            final scaleX = renderWidth / scratchStageWidth;
+            final scaleY = renderHeight / scratchStageHeight;
 
-              final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
-              final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
+            final screenX = (sprite.x + scratchStageWidth / 2) * scaleX;
+            final screenY = (scratchStageHeight / 2 - sprite.y) * scaleY;
 
-              final scaledSize = sprite.size / 100 / costume.bitmapResolution;
-              final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
-              final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
+            final scaledSize = sprite.size / 100 / costume.bitmapResolution;
+            final scaledRotationCenterX = costume.rotationCenterX.toDouble() * scaledSize;
+            final scaledRotationCenterY = costume.rotationCenterY.toDouble() * scaledSize;
 
-              Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
+            Widget child = _buildCostumeWidget(costume, fit: BoxFit.contain);
 
-              if (sprite.rotationStyle == 'left-right' &&
-                  (sprite.direction < 0 || sprite.direction > 180)) {
-                child = Transform.flip(flipX: true, child: child);
-              } else if (sprite.rotationStyle == 'all around') {
-                child = Transform.rotate(
-                  angle: (sprite.direction - 90) * math.pi / 180,
-                  child: child,
-                );
-              }
-
-              return Positioned(
-                left: screenX - scaledRotationCenterX,
-                top: screenY - scaledRotationCenterY,
-                child: Transform.scale(
-                  scale: scaledSize,
-                  child: child,
-                ),
+            if (sprite.rotationStyle == 'left-right' &&
+                (sprite.direction < 0 || sprite.direction > 180)) {
+              child = Transform.flip(flipX: true, child: child);
+            } else if (sprite.rotationStyle == 'all around') {
+              child = Transform.rotate(
+                angle: (sprite.direction - 90) * math.pi / 180,
+                child: child,
               );
-            }),
-          ],
-        ),
+            }
+
+            return Positioned(
+              left: screenX - scaledRotationCenterX,
+              top: screenY - scaledRotationCenterY,
+              child: Transform.scale(
+                scale: scaledSize,
+                child: child,
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
