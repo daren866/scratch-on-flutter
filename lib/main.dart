@@ -163,7 +163,6 @@ class BlockExecutor {
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Mouse mouse = Mouse();
-  bool _isMouseInStage = false;
 
   BlockExecutor(this.projectBank, {this.onFrameUpdate});
 
@@ -1297,6 +1296,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ProjectBank? _projectBank;
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
+  bool _isMouseInStage = false;
 
   Future<void> _pickFile() async {
     try {
@@ -1974,12 +1974,12 @@ class _MyHomePageState extends State<MyHomePage> {
     _mouse.postData({'isDown': false});
   }
 
-  void _handleMouseEnter(PointerEnterEvent event) {
+  void _handleMouseEnter(PointerEvent event) {
     _isMouseInStage = true;
     debugPrint('鼠标进入舞台区域');
   }
 
-  void _handleMouseExit(PointerExitEvent event) {
+  void _handleMouseExit(PointerEvent event) {
     _isMouseInStage = false;
     debugPrint('鼠标离开舞台区域');
   }
