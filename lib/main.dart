@@ -1801,7 +1801,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ..sort((a, b) => a.layerOrder.compareTo(b.layerOrder));
 
     return Listener(
-      onPointerHover: (event) {
+      onPointerMove: (event) {
         _handleMouseMove(event);
       },
       onPointerDown: (event) {
@@ -1927,7 +1927,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return imageWidget;
   }
 
-  void _handleMouseMove(PointerHoverEvent event) {
+  void _handleMouseMove(PointerEvent event) {
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
     
