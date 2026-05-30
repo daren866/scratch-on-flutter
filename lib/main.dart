@@ -1951,27 +1951,17 @@ class _MyHomePageState extends State<MyHomePage> {
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
     
-    final scratchStageWidth = 480.0;
-    final scratchStageHeight = 360.0;
-    final renderWidth = 480.0;
-    final renderHeight = 320.0;
+    final canvasWidth = 480.0;
+    final canvasHeight = 320.0;
     
-    final scaleX = renderWidth / scratchStageWidth;
-    final scaleY = renderHeight / scratchStageHeight;
-    
-    final scratchX = 480 * ((position.dx / scaleX / renderWidth) - 0.5);
-    final scratchY = -360 * ((position.dy / scaleY / renderHeight) - 0.5);
-    
-    debugPrint('鼠标移动: 客户端(${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}) → Scratch($scratchX, $scratchY)');
+    debugPrint('鼠标移动: 客户端坐标(${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)})');
     
     _mouse.postData({
-      'x': scratchX,
-      'y': scratchY,
-      'canvasWidth': scratchStageWidth,
-      'canvasHeight': scratchStageHeight,
+      'x': position.dx,
+      'y': position.dy,
+      'canvasWidth': canvasWidth,
+      'canvasHeight': canvasHeight,
     });
-    
-    debugPrint('鼠标移动: 客户端坐标(${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}) → Scratch坐标(${scratchX.toStringAsFixed(1)}, ${scratchY.toStringAsFixed(1)})');
   }
 
   void _handleMouseDown(PointerDownEvent event) {
