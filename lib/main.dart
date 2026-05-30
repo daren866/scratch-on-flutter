@@ -1305,6 +1305,8 @@ class _MyHomePageState extends State<MyHomePage> {
   double _displayMouseX = 0;
   double _displayMouseY = 0;
   bool _displayMouseDown = false;
+  int _lastMouseUpdateTime = 0;
+  static const int _mouseUpdateIntervalMs = 33;
 
   Future<void> _pickFile() async {
     try {
@@ -2007,6 +2009,12 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!_isMouseInStage) {
       return;
     }
+    
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - _lastMouseUpdateTime < _mouseUpdateIntervalMs) {
+      return;
+    }
+    _lastMouseUpdateTime = now;
     
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
