@@ -1301,6 +1301,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isLoading = false;
   String _statusMessage = '请选择 SB3 文件';
   bool _isMouseInStage = false;
+  bool _showDebugPanel = false;
+  final List<String> _debugLogs = [];
+  double _displayMouseX = 0;
+  double _displayMouseY = 0;
+  bool _displayMouseDown = false;
 
   Future<void> _pickFile() async {
     try {
@@ -1615,6 +1620,63 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ),
                         ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _showDebugPanel = !_showDebugPanel;
+                            });
+                          },
+                          child: Text(_showDebugPanel ? '隐藏调试面板' : '显示调试面板'),
+                        ),
+                        if (_showDebugPanel) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 480,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.black87,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  '🐭 鼠标调试信息',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '鼠标坐标: (${_displayMouseX.toStringAsFixed(1)}, ${_displayMouseY.toStringAsFixed(1)})',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                                Text(
+                                  '鼠标按下: ${_displayMouseDown ? "是" : "否"}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: _displayMouseDown ? Colors.red : Colors.green,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '鼠标在舞台内: ${_isMouseInStage ? "是" : "否"}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.yellow,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1944,7 +2006,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _handleMouseMove(PointerEvent event) {
     if (!_isMouseInStage) {
-      debugPrint('鼠标移动但不在舞台区域内，忽略');
       return;
     }
     
@@ -1954,14 +2015,14 @@ class _MyHomePageState extends State<MyHomePage> {
     final canvasWidth = 480.0;
     final canvasHeight = 320.0;
     
-    debugPrint('鼠标移动: 客户端坐标(${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)})');
-    
     _mouse.postData({
       'x': position.dx,
       'y': position.dy,
       'canvasWidth': canvasWidth,
       'canvasHeight': canvasHeight,
     });
+    
+    _updateDebugInfo();
   }
 
   void _handleMouseDown(PointerDownEvent event) {
@@ -1974,11 +2035,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _handleMouseEnter(PointerEvent event) {
     _isMouseInStage = true;
-    debugPrint('鼠标进入舞台区域');
   }
 
   void _handleMouseExit(PointerEvent event) {
     _isMouseInStage = false;
-    debugPrint('鼠标离开舞台区域');
+  }
+
+  void _updateDebugInfo() {
+    setState(() {
+      _displayMouseX = _mouse.ioQuery('getScratchX') as double;
+      _displayMouseY = _mouse.ioQuery('getScratchY') as double;
+      _displayMouseDown = _mouse.ioQuery('getIsDown') as bool;
+    });
   }
 }
