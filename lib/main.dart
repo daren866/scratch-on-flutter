@@ -1302,7 +1302,6 @@ class _MyHomePageState extends State<MyHomePage> {
   String _statusMessage = '请选择 SB3 文件';
   bool _isMouseInStage = false;
   bool _showDebugPanel = false;
-  final List<String> _debugLogs = [];
   double _displayMouseX = 0;
   double _displayMouseY = 0;
   bool _displayMouseDown = false;
