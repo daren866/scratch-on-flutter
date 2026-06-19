@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -1307,6 +1308,9 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _displayMouseDown = false;
   int _lastMouseUpdateTime = 0;
   static const int _mouseUpdateIntervalMs = 33;
+  Timer? _mouseUpdateTimer;
+  double _lastMouseX = 0;
+  double _lastMouseY = 0;
 
   Future<void> _pickFile() async {
     try {
@@ -2009,26 +2013,58 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!_isMouseInStage) {
       return;
     }
-    
+
     final now = DateTime.now().millisecondsSinceEpoch;
     if (now - _lastMouseUpdateTime < _mouseUpdateIntervalMs) {
       return;
     }
     _lastMouseUpdateTime = now;
-    
+
     final renderBox = context.findRenderObject() as RenderBox;
     final position = renderBox.globalToLocal(event.position);
-    
+
     final canvasWidth = 480.0;
     final canvasHeight = 320.0;
-    
+
+    _lastMouseX = position.dx;
+    _lastMouseY = position.dy;
+
     _mouse.postData({
       'x': position.dx,
       'y': position.dy,
       'canvasWidth': canvasWidth,
       'canvasHeight': canvasHeight,
     });
-    
+
+    _updateDebugInfo();
+  }
+
+  void _startMouseTracking() {
+    _mouseUpdateTimer?.cancel();
+    _mouseUpdateTimer = Timer.periodic(
+      Duration(milliseconds: _mouseUpdateIntervalMs),
+      (_) => _sendMousePosition(),
+    );
+  }
+
+  void _stopMouseTracking() {
+    _mouseUpdateTimer?.cancel();
+    _mouseUpdateTimer = null;
+  }
+
+  void _sendMousePosition() {
+    if (!_isMouseInStage) return;
+
+    final canvasWidth = 480.0;
+    final canvasHeight = 320.0;
+
+    _mouse.postData({
+      'x': _lastMouseX,
+      'y': _lastMouseY,
+      'canvasWidth': canvasWidth,
+      'canvasHeight': canvasHeight,
+    });
+
     _updateDebugInfo();
   }
 
@@ -2042,10 +2078,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _handleMouseEnter(PointerEvent event) {
     _isMouseInStage = true;
+    _startMouseTracking();
   }
 
   void _handleMouseExit(PointerEvent event) {
     _isMouseInStage = false;
+    _stopMouseTracking();
   }
 
   void _updateDebugInfo() {
