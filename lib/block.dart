@@ -223,8 +223,6 @@ class ScratchRuntime {
   }
 
   Future<void> onSpriteClicked(ScratchTarget target) async {
-    if (!_isRunning) return;
-
     final clickedBlocks = <MapEntry<String, ScratchTarget>>[];
 
     for (final entry in target.blocks.entries) {

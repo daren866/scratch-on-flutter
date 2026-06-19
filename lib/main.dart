@@ -89,8 +89,6 @@ class BlockExecutor {
   }
 
   Future<void> onSpriteClicked(ScratchTarget target) async {
-    if (!isRunning) return;
-
     final clickedBlocks = <MapEntry<String, dynamic>>[];
 
     for (final entry in target.blocks.entries) {
@@ -1966,7 +1964,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleMouseDown(PointerDownEvent event) {
     _mouse.postData({'isDown': true});
 
-    if (_isRunning && _currentExecutor != null) {
+    if (_currentExecutor != null) {
       final renderBox = context.findRenderObject() as RenderBox;
       final position = renderBox.globalToLocal(event.position);
 
