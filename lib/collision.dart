@@ -73,7 +73,7 @@ class BoundingBox {
     return x >= left && x <= right && y >= bottom && y <= top;
   }
 
-  BoundingBox? get intersection(BoundingBox other) {
+  BoundingBox? intersection(BoundingBox other) {
     if (!intersects(other)) {
       return null;
     }
