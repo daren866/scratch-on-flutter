@@ -222,6 +222,40 @@ class ScratchRuntime {
     _isRunning = false;
   }
 
+  Future<void> onSpriteClicked(ScratchTarget target) async {
+    if (!_isRunning) return;
+
+    final clickedBlocks = <MapEntry<String, ScratchTarget>>[];
+
+    for (final entry in target.blocks.entries) {
+      final block = entry.value;
+      if (block is Map && block['opcode'] == 'event_whenthisspriteclicked') {
+        clickedBlocks.add(MapEntry(entry.key, target));
+      }
+    }
+
+    for (final entry in clickedBlocks) {
+      final thread = ScratchThread(entry.key);
+      thread.target = entry.value;
+      threads.add(thread);
+      await _executeThread(thread);
+      threads.remove(thread);
+    }
+  }
+
+  ScratchTarget? getSpriteAtPoint(double scratchX, double scratchY) {
+    final sprites = projectBank.targets.where((t) => !t.isStage && t.isVisible).toList();
+    sprites.sort((a, b) => b.layerOrder.compareTo(a.layerOrder));
+
+    for (final sprite in sprites) {
+      if (collisionDetector.isTouchingPoint(sprite, scratchX, scratchY)) {
+        return sprite;
+      }
+    }
+
+    return null;
+  }
+
   Future<void> _executeThread(ScratchThread thread) async {
     while (thread.status != ScratchThread.STATUS_DONE && _isRunning) {
       final currentBlockId = thread.peekStack();

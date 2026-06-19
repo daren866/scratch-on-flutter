@@ -88,6 +88,36 @@ class BlockExecutor {
     isRunning = false;
   }
 
+  Future<void> onSpriteClicked(ScratchTarget target) async {
+    if (!isRunning) return;
+
+    final clickedBlocks = <MapEntry<String, dynamic>>[];
+
+    for (final entry in target.blocks.entries) {
+      final block = entry.value;
+      if (block is Map && block['opcode'] == 'event_whenthisspriteclicked') {
+        clickedBlocks.add(entry);
+      }
+    }
+
+    for (final entry in clickedBlocks) {
+      await _executeBlockChain(target, entry.key);
+    }
+  }
+
+  ScratchTarget? getSpriteAtPoint(double scratchX, double scratchY) {
+    final sprites = projectBank.targets.where((t) => !t.isStage && t.isVisible).toList();
+    sprites.sort((a, b) => b.layerOrder.compareTo(a.layerOrder));
+
+    for (final sprite in sprites) {
+      if (collisionDetector.isTouchingPoint(sprite, scratchX, scratchY)) {
+        return sprite;
+      }
+    }
+
+    return null;
+  }
+
   Future<void> _executeBlockChain(ScratchTarget target, String blockId) async {
     String? currentBlockId = blockId;
 
@@ -1935,6 +1965,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _handleMouseDown(PointerDownEvent event) {
     _mouse.postData({'isDown': true});
+
+    if (_isRunning && _currentExecutor != null) {
+      final renderBox = context.findRenderObject() as RenderBox;
+      final position = renderBox.globalToLocal(event.position);
+
+      final canvasWidth = 480.0;
+      final canvasHeight = 320.0;
+
+      final scratchX = 480 * ((position.dx / canvasWidth) - 0.5);
+      final scratchY = -360 * ((position.dy / canvasHeight) - 0.5);
+
+      final clickedSprite = _currentExecutor!.getSpriteAtPoint(scratchX, scratchY);
+
+      if (clickedSprite != null) {
+        debugPrint('点击到角色: ${clickedSprite.name}');
+        _currentExecutor!.onSpriteClicked(clickedSprite);
+      }
+    }
   }
 
   void _handleMouseUp(PointerUpEvent event) {
