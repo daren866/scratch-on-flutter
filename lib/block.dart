@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart' as audioplayers;
 
 import 'mouse.dart';
 import 'models.dart';
+import 'collision.dart';
 
 class ScratchThread {
   static const int STATUS_RUNNING = 0;
@@ -168,11 +169,12 @@ class ScratchRuntime {
   final Map<String, audioplayers.AudioPlayer> _soundHandles = {};
   
   final Mouse mouse = Mouse();
+  final CollisionDetector collisionDetector;
 
   ScratchRuntime({
     required this.projectBank,
     this.onFrameUpdate,
-  });
+  }) : collisionDetector = CollisionDetector(projectBank);
 
   bool get isRunning => _isRunning;
 
@@ -1025,29 +1027,9 @@ class ScratchRuntime {
     if (touchingObj == '_mouse_') {
       final mouseX = mouse.ioQuery('getScratchX') as double? ?? 0;
       final mouseY = mouse.ioQuery('getScratchY') as double? ?? 0;
-      return _isPointInTarget(mouseX, mouseY, target);
+      return collisionDetector.isTouchingMouse(target, mouseX, mouseY);
     }
 
-    for (final t in projectBank.targets) {
-      if (t.name == touchingObj) {
-        return _isPointInTarget(t.x, t.y, target);
-      }
-    }
-
-    return false;
-  }
-
-  bool _isPointInTarget(double pointX, double pointY, ScratchTarget target) {
-    if (!target.isVisible) return false;
-    if (target.isStage) return false;
-
-    final sizeScale = target.size / 100;
-    final width = 48 * sizeScale;
-    final height = 48 * sizeScale;
-
-    return (pointX >= target.x - width / 2 &&
-            pointX <= target.x + width / 2 &&
-            pointY >= target.y - height / 2 &&
-            pointY <= target.y + height / 2);
+    return collisionDetector.isTouchingSprite(target, touchingObj);
   }
 }

@@ -10,6 +10,7 @@ import 'package:audioplayers/audioplayers.dart' as audioplayers;
 import 'dart:convert';
 
 import 'mouse.dart';
+import 'collision.dart';
 
 void main() {
   runApp(const MyApp());
@@ -164,8 +165,10 @@ class BlockExecutor {
   final VoidCallback? onFrameUpdate;
   final List<audioplayers.AudioPlayer> _activePlayers = [];
   final Mouse mouse;
+  final CollisionDetector collisionDetector;
 
-  BlockExecutor(this.projectBank, {this.onFrameUpdate, required this.mouse});
+  BlockExecutor(this.projectBank, {this.onFrameUpdate, required this.mouse})
+      : collisionDetector = CollisionDetector(projectBank);
 
   void stop() {
     isRunning = false;
@@ -1227,24 +1230,12 @@ class BlockExecutor {
     if (touchingObj == '_mouse_') {
       final mouseX = mouse.ioQuery('getScratchX') as double? ?? 0;
       final mouseY = mouse.ioQuery('getScratchY') as double? ?? 0;
-      isTouching = _isPointInTarget(mouseX, mouseY, target);
+      isTouching = collisionDetector.isTouchingMouse(target, mouseX, mouseY);
       debugPrint('角色 ${target.name} 是否碰到鼠标: $isTouching (鼠标坐标: $mouseX, $mouseY)');
+    } else {
+      isTouching = collisionDetector.isTouchingSprite(target, touchingObj);
     }
     return isTouching;
-  }
-
-  bool _isPointInTarget(double pointX, double pointY, ScratchTarget target) {
-    if (!target.isVisible) return false;
-    if (target.isStage) return false;
-
-    final sizeScale = target.size / 100;
-    final width = 48 * sizeScale;
-    final height = 48 * sizeScale;
-
-    final inXRange = pointX >= target.x - width / 2 && pointX <= target.x + width / 2;
-    final inYRange = pointY >= target.y - height / 2 && pointY <= target.y + height / 2;
-
-    return inXRange && inYRange;
   }
 
   Future<void> _executeSensingTouchingColor(ScratchTarget target, Map<String, dynamic> block) async {
