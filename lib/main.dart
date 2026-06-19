@@ -119,7 +119,7 @@ class BlockExecutor {
   Future<void> _executeBlockChain(ScratchTarget target, String blockId) async {
     String? currentBlockId = blockId;
 
-    while (currentBlockId != null && isRunning) {
+    while (currentBlockId != null) {
       final blockData = target.blocks[currentBlockId];
       if (blockData is! Map<String, dynamic>) {
         currentBlockId = null;
@@ -1442,7 +1442,6 @@ class _MyHomePageState extends State<MyHomePage> {
     if (mounted) {
       setState(() {
         _isRunning = false;
-        _currentExecutor = null;
         _statusMessage = '运行完成！';
       });
     }
