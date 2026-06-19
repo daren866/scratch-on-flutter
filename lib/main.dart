@@ -1917,7 +1917,7 @@ class _MyHomePageState extends State<MyHomePage> {
     final position = renderBox.globalToLocal(event.position);
 
     final canvasWidth = 480.0;
-    final canvasHeight = 320.0;
+    final canvasHeight = 360.0;
 
     _lastMouseX = position.dx;
     _lastMouseY = position.dy;
@@ -1949,7 +1949,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (!_isMouseInStage) return;
 
     final canvasWidth = 480.0;
-    final canvasHeight = 320.0;
+    final canvasHeight = 360.0;
 
     _mouse.postData({
       'x': _lastMouseX,
@@ -1969,7 +1969,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final position = renderBox.globalToLocal(event.position);
 
       final canvasWidth = 480.0;
-      final canvasHeight = 320.0;
+      final canvasHeight = 360.0;
 
       final scratchX = 480 * ((position.dx / canvasWidth) - 0.5);
       final scratchY = -360 * ((position.dy / canvasHeight) - 0.5);
