@@ -99,7 +99,7 @@ class BlockExecutor {
     }
 
     for (final entry in clickedBlocks) {
-      await _executeBlockChain(target, entry.key);
+      await _executeBlockChainUnchecked(target, entry.key);
     }
   }
 
@@ -117,6 +117,22 @@ class BlockExecutor {
   }
 
   Future<void> _executeBlockChain(ScratchTarget target, String blockId) async {
+    String? currentBlockId = blockId;
+
+    while (currentBlockId != null && isRunning) {
+      final blockData = target.blocks[currentBlockId];
+      if (blockData is! Map<String, dynamic>) {
+        currentBlockId = null;
+        continue;
+      }
+
+      await _executeBlock(target, blockData);
+
+      currentBlockId = blockData['next'] as String?;
+    }
+  }
+
+  Future<void> _executeBlockChainUnchecked(ScratchTarget target, String blockId) async {
     String? currentBlockId = blockId;
 
     while (currentBlockId != null) {
